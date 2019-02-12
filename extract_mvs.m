@@ -17,12 +17,12 @@ ret_code = system(strcat("cd FFmpeg ", ...
                 "../test_out.mp4 > ../", mvs_filename));
 if ret_code == 0
 	mvs_file = fopen(mvs_filename, 'r');
-    % mvs_raw = fscanf(mvs_file, mv_format, [7, Inf]);
+    mvs_raw = fscanf(mvs_file, mv_format, [7, Inf]);
     fclose(mvs_file);
 end
 
 % convert mvs_raw to more readable form
-mvs_x = zeros(1, 1, max(mvs_raw(1, 2))); % max value of frame + 1
+mvs_x = ones(1, 1, max(mvs_raw(1, 2))); % max value of frame + 1
 mvs_y = zeros(1, 1, max(mvs_raw(1, 2)));
 for j = 1:size(mvs_raw, 2)
 	frame = mvs_raw(1, j) + 1; % frame start at 0
@@ -44,28 +44,64 @@ end
 % open the video for visualization
 frame = 2;
 video_reader = VideoReader(input_file);
-input_video = read(video_reader, frame);
-figure
-imshow(input_video);
+input_video_frame = read(video_reader, frame);
+figure(1);
+[rows, cols, chans] = size(input_video);
+X = ones(rows, 1) * (1 : cols);
+Y = (1 : rows)' * ones(1, cols);
+image((1:cols), (1:rows), input_video_frame);
+title(['Frame ', num2str(frame)]);
+
+% Just to show how quiver works
+Xpos = X(8 : 16 : end, 8 : 16 : end);
+Ypos = Y(8 : 16 : end, 8 : 16 : end);
+vx = ones(size(X)) * NaN;
+vy = vx;
+vx(8 : 16 : end, 8 : 16 : end) = -15 * ones(size(Xpos));
+vy(8 : 16 : end, 8 : 16 : end) = 25 * ones(size(Xpos));
+hold on
+quiver(X, Y, vx, vy, 0, 'r-', 'linewidth', 2); shg
+hold off;
+
+previous_video_frame = read(video_reader, frame - 1);
+figure(2);
+image(previous_video_frame);
+title('The previous frame');
+
+offset_X = X + vx;
+offset_Y = Y + vy;
+mc_previous = double(previous_video_frame);
+for col = 1 : 3,
+  mc_previous(:, :, col) = interp2(X, Y, double(previous_video_frame(:, :, col)), offset_X, offset_Y);
+end;
+
+figure(3);
+image(mc_previous);
+title('The motion compensated previous frame');
+
+figure(4);
+image(uint8(128 + double(previous_video_frame) - double(input_video_frame)));
+title('The NON motion compensated frame difference');
+
 
 % [X,Y]
-index = 1;
-for row = 1:min(size(input_video, 1) , size(mvs_y(:,:,frame), 1))
-    for col = 1:min(size(input_video, 2), size(mvs_x(:,:,frame), 2))
-        if mvs_x(row,col,frame) ~= 0 || mvs_x(row,col,frame) ~= 0
-            X(index) = col;
-            Y(index) = row;
-            DX = mvs_x(row, col, frame);
-            DY = mvs_y(row, col, frame);
-            index = index + 1;
-        end
-    end
-end
+% index = 1;
+% for row = 1:min(size(input_video, 1) , size(mvs_y(:,:,frame), 1))
+%     for col = 1:min(size(input_video, 2), size(mvs_x(:,:,frame), 2))
+%         %if mvs_x(row,col,frame) ~= 0 || mvs_x(row,col,frame) ~= 0
+%             X(index) = col;
+%             Y(index) = row;
+%             DX = mvs_x(row, col, frame);
+%             DY = mvs_y(row, col, frame);
+%             index = index + 1;
+%         %end
+%     end
+% end
 
 %DX = mvs_x(:, , frame);
 %DY = mvs_y(:, :, frame);
 %contour(X,Y,Z)
 
 hold on;
-quiver(X,Y,DX,DY)
+quiver(X,Y,DX,DY,0)
 %hold off;
