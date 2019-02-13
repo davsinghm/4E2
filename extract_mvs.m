@@ -1,3 +1,6 @@
+close all
+clear
+
 % exported mv format from ffmpeg
 % 
 % frame_count: starting from 0.
@@ -11,7 +14,7 @@ mv_format = "frame_count: %d, frame_type: %c, mv_dst: (%d, %d), mv_src: (%d, %d)
 input_file = "test.mp4";
 
 % encode orignal file to input_file with specific settings (gop size etc)
-if 0
+if 1
     orig_input_file = "test_orig.mp4";
     sub_me = 1;
     bframes_no = 0;
@@ -22,7 +25,7 @@ if 0
     ret_code = system(strcat("cd FFmpeg ", ...
                     "&& make ", ...
                     "&& ./ffmpeg -y -i ", "../", orig_input_file, " ", ...
-                    "-c:v libx264 -x264opts ", x264_opts, " ", ...
+                    "-c:v libx264 -crf 5 -x264opts ", x264_opts, " ", ...
                     "../", input_file));
     if ret_code ~= 0
         ret_code
@@ -30,7 +33,7 @@ if 0
     end
 end
 
-if 0
+if 1
     mvs_filename = "mvs.txt";
     ret_code = system(strcat("cd FFmpeg ", ...
                     "&& make ", ...
@@ -127,16 +130,16 @@ image(previous_video_frame);
 title('The previous frame');
 
 % fill u and v with same mv from block
-u = NaN(size(x));
-v = NaN(size(x));
+u = zeros(size(x));
+v = zeros(size(x));
 for i = 1 : size(mvs_y, 1)
     for j = 1 : size(mvs_x, 2)
         for mb_i = 1 : block_size_h
             for mb_j = 1 : block_size_w
                 % conditions, to make sure the matrix doesn't grow more
                 % than x, y
-                if mb_i + (i-1) * block_size_h < size(x, 1) ...
-                        && mb_j + (j-1) * block_size_w < size(x, 2)
+                if mb_i + (i-1) * block_size_h <= size(x, 1) ...
+                        && mb_j + (j-1) * block_size_w <= size(x, 2)
                     u(mb_i + (i - 1) * block_size_h, ...
                       mb_j + (j - 1) * block_size_w ...
                      ) ...
@@ -155,15 +158,31 @@ offset_x = x + u;
 offset_y = y + v;
 mc_previous = double(previous_video_frame);
 for col = 1 : 3
-	mc_previous(:, :, col) ...
+	mcpic  ...
         = interp2(x, y, double(previous_video_frame(:, :, col)), ...
                   offset_x, offset_y);
+    [index] = find(isnan(mcpic));
+    mcpic(index) = zeros(length(index), 1);
+    mc_previous(:, :, col) = mcpic;
 end
 
 figure(3);
-image(mc_previous);
+image(uint8(mc_previous));
 title('The motion compensated previous frame');
 
 figure(4);
 image(uint8(128 + double(previous_video_frame) - double(input_video_frame)));
 title('The (non-mc) frame difference');
+
+
+figure(5);
+image(uint8(128 + double(previous_video_frame) - double(mc_previous)));
+title('The MC frame difference');
+
+non_mc_e = double(previous_video_frame) - double(input_video_frame);
+mc_e = double(input_video_frame) - double(mc_previous);
+mae_non_mc_e =  mean(mean(abs(non_mc_e(:, :, 1))))
+mae_mc_e = mean(mean(abs(mc_e(:, :, 1))))
+
+
+% need to generate error based on original frames
