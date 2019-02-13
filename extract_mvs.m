@@ -21,18 +21,30 @@ if ret_code == 0
     fclose(mvs_file);
 end
 
+% block size
+block_size_w = 16;
+block_size_h = 16;
 % convert mvs_raw to more readable form
-mvs_x = ones(1, 1, max(mvs_raw(1, 2))); % max value of frame + 1
-mvs_y = zeros(1, 1, max(mvs_raw(1, 2)));
-for j = 1:size(mvs_raw, 2)
+no_of_frames = max(mvs_raw(1, 2)); % max value of frame + 1
+mvs_x = NaN(1, 1, no_of_frames); % set initial values to NaN
+mvs_y = NaN(1, 1, no_of_frames);
+for j = 1 : size(mvs_raw, 2)
 	frame = mvs_raw(1, j) + 1; % frame start at 0
     frame_type = mvs_raw(2, j); % (char/byte) p, b or u
     % ignore other frames for now
     if frame_type == 'p'
-        mv_dst = [mvs_raw(3, j) + 1, mvs_raw(4, j) + 1]; % abs dst pos (x, y)
-        mv_src = [mvs_raw(5, j) + 1, mvs_raw(6, j) + 1]; % abs src pos (x, y)
-        mvs_x(mv_dst(2), mv_dst(1), frame) = mv_src(1) - mv_dst(1);
-        mvs_y(mv_dst(2), mv_dst(1), frame) = mv_src(2) - mv_dst(2);
+        mv_dst = [mvs_raw(3, j), mvs_raw(4, j)]; % abs dst pos (x, y)
+        mv_src = [mvs_raw(5, j), mvs_raw(6, j)]; % abs src pos (x, y)
+        mvs_x( ...
+              floor(mv_dst(2) / block_size_w) + 1, ...
+              floor(mv_dst(1) / 16) + 1, frame ...
+             ) ...
+              = mv_src(1) - mv_dst(1);
+        mvs_y( ...
+              floor(mv_dst(2) / block_size_h) + 1, ...
+              floor(mv_dst(1) / 16) + 1, frame ...
+             ) ...
+              = mv_src(2) - mv_dst(2);
     end
 end
 % TODO convert mvs_raw to more readable form
@@ -47,29 +59,29 @@ video_reader = VideoReader(input_file);
 input_video_frame = read(video_reader, frame);
 figure(1);
 [rows, cols, chans] = size(input_video_frame);
-X = ones(rows, 1) * (1 : cols);
-Y = (1 : rows)' * ones(1, cols);
+x = ones(rows, 1) * (1 : cols);
+y = (1 : rows)' * ones(1, cols);
 image((1:cols), (1:rows), input_video_frame);
 title(['Frame ', num2str(frame)]);
 
 % show vectors using quiver
-Xpos = X(1 : 1 : end, 1 : 1 : end);
-Ypos = Y(1 : 1 : end, 1 : 1 : end);
-vx = ones(size(X)) * NaN;
-vy = vx;
-width = min(size(X, 2), size(mvs_x, 2));
-height = min(size(X, 1), size(mvs_x, 1));
-for x = 1 : width
-    for y = 1 : height
-        vx(y, x) = mvs_x(y, x, frame);
-        vy(y, x) = mvs_y(y, x, frame);
+xpos = x(floor(block_size_w / 2) : block_size_w : end, ...
+         floor(block_size_h / 2) : block_size_h : end);
+ypos = y(floor(block_size_w / 2) : block_size_w : end, ...
+         floor(block_size_h / 2) : block_size_h : end);
+u = NaN(size(xpos));
+v = NaN(size(xpos));
+for i = 1 : min(size(u, 1), size(mvs_x, 1))
+    for j = 1 : min(size(v, 2), size(mvs_y, 2))
+        u(i, j) = mvs_x(i, j, frame);
+        v(i, j) = mvs_y(i, j, frame);
     end
 end
 
 %vx(1 : 1 : end, 1 : 1 : end) = -15 * ones(size(Xpos));
 %vy(1 : 1 : end, 1 : 1 : end) = 25 * ones(size(Xpos));
 hold on
-quiver(X, Y, vx, vy, 0, 'r-', 'linewidth', 2); shg
+quiver(xpos, ypos, u, v, 0, 'r-', 'linewidth', 2); shg
 hold off;
 
 % Just to show how quiver works
