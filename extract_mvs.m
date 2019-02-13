@@ -9,6 +9,27 @@
 mv_format = "frame_count: %d, frame_type: %c, mv_dst: (%d, %d), mv_src: (%d, %d), mv_type: %c\n";
 
 input_file = "test.mp4";
+
+% encode orignal file to input_file with specific settings (gop size etc)
+if 1
+    orig_input_file = "test_orig.mp4";
+    sub_me = 1;
+    bframes_no = 0;
+    ref_frames = 0;
+    keyint = 2; % max interval b/w IDR-frames (aka keyframes)
+    x264_opts = strcat("no-psy=1:aq-mode=0:ref=", num2str(ref_frames), ":subme=", num2str(sub_me), ":keyint=", num2str(keyint));
+    % only keyint x264_opts = strcat("keyint=", num2str(keyint));
+    ret_code = system(strcat("cd FFmpeg ", ...
+                    "&& make ", ...
+                    "&& ./ffmpeg -y -i ", "../", orig_input_file, " ", ...
+                    "-c:v libx264 -x264opts ", x264_opts, " ", ...
+                    "../", input_file));
+    if ret_code ~= 0
+        ret_code
+        return;
+    end
+end
+
 mvs_filename = "mvs.txt";
 ret_code = system(strcat("cd FFmpeg ", ...
                 "&& make ", ...
@@ -17,8 +38,11 @@ ret_code = system(strcat("cd FFmpeg ", ...
                 "../test_out.mp4 > ../", mvs_filename));
 if ret_code == 0
 	mvs_file = fopen(mvs_filename, 'r');
-    %mvs_raw = fscanf(mvs_file, mv_format, [7, Inf]);
+    mvs_raw = fscanf(mvs_file, mv_format, [7, Inf]);
     fclose(mvs_file);
+else
+    ret_code
+    return;
 end
 
 % block size
@@ -81,7 +105,7 @@ end
 %vx(1 : 1 : end, 1 : 1 : end) = -15 * ones(size(Xpos));
 %vy(1 : 1 : end, 1 : 1 : end) = 25 * ones(size(Xpos));
 hold on
-quiver(xpos, ypos, u, v, 0, 'r-', 'linewidth', 2); shg
+quiver(xpos, ypos, u, v, 0, 'r-', 'linewidth', 1); shg
 hold off;
 
 % Just to show how quiver works
