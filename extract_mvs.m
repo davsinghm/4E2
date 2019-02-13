@@ -11,7 +11,7 @@ mv_format = "frame_count: %d, frame_type: %c, mv_dst: (%d, %d), mv_src: (%d, %d)
 input_file = "test.mp4";
 
 % encode orignal file to input_file with specific settings (gop size etc)
-if 1
+if 0
     orig_input_file = "test_orig.mp4";
     sub_me = 1;
     bframes_no = 0;
@@ -30,19 +30,21 @@ if 1
     end
 end
 
-mvs_filename = "mvs.txt";
-ret_code = system(strcat("cd FFmpeg ", ...
-                "&& make ", ...
-                "&& ./ffmpeg -y -flags2 +export_mvs -i ", "../", input_file, " ", ...
-                "-vf codecview=mv_type=fp+bp -c:v libx264 -preset ultrafast -crf 0 ", ...
-                "../test_out.mp4 > ../", mvs_filename));
-if ret_code == 0
-	mvs_file = fopen(mvs_filename, 'r');
-    mvs_raw = fscanf(mvs_file, mv_format, [7, Inf]);
-    fclose(mvs_file);
-else
-    ret_code
-    return;
+if 0
+    mvs_filename = "mvs.txt";
+    ret_code = system(strcat("cd FFmpeg ", ...
+                    "&& make ", ...
+                    "&& ./ffmpeg -y -flags2 +export_mvs -i ", "../", input_file, " ", ...
+                    "-vf codecview=mv_type=fp+bp -c:v libx264 -preset ultrafast -crf 0 ", ...
+                    "../test_out.mp4 > ../", mvs_filename));
+    if ret_code == 0
+        mvs_file = fopen(mvs_filename, 'r');
+        mvs_raw = fscanf(mvs_file, mv_format, [7, Inf]);
+        fclose(mvs_file);
+    else
+        ret_code
+        return;
+    end
 end
 
 % block size
@@ -78,7 +80,7 @@ end
 %      > convert src to mb for mem management ?
 
 % open the video for visualization
-frame = 76;
+frame = 78;
 video_reader = VideoReader(input_file);
 input_video_frame = read(video_reader, frame);
 figure(1);
@@ -119,45 +121,49 @@ hold off;
 % quiver(X, Y, vx, vy, 0, 'r-', 'linewidth', 2); shg
 % hold off;
 
-% previous_video_frame = read(video_reader, frame - 1);
-% figure(2);
-% image(previous_video_frame);
-% title('The previous frame');
-% 
-% offset_X = X + vx;
-% offset_Y = Y + vy;
-% mc_previous = double(previous_video_frame);
-% for col = 1 : 3,
-%   mc_previous(:, :, col) = interp2(X, Y, double(previous_video_frame(:, :, col)), offset_X, offset_Y);
-% end;
-% 
-% figure(3);
-% image(mc_previous);
-% title('The motion compensated previous frame');
-% 
-% figure(4);
-% image(uint8(128 + double(previous_video_frame) - double(input_video_frame)));
-% title('The NON motion compensated frame difference');
+previous_video_frame = read(video_reader, frame - 1);
+figure(2);
+image(previous_video_frame);
+title('The previous frame');
 
+% fill u and v with same mv from block
+u = NaN(size(x));
+v = NaN(size(x));
+for i = 1 : size(mvs_y, 1)
+    for j = 1 : size(mvs_x, 2)
+        for mb_i = 1 : block_size_h
+            for mb_j = 1 : block_size_w
+                % conditions, to make sure the matrix doesn't grow more
+                % than x, y
+                if mb_i + (i-1) * block_size_h < size(x, 1) ...
+                        && mb_j + (j-1) * block_size_w < size(x, 2)
+                    u(mb_i + (i - 1) * block_size_h, ...
+                      mb_j + (j - 1) * block_size_w ...
+                     ) ...
+                       = mvs_x(i, j, frame);
+                    v(mb_i + (i - 1) * block_size_h, ...
+                      mb_j + (j-1) * block_size_w ...
+                     ) ...
+                       = mvs_y(i, j, frame);
+                end
+            end
+        end
+    end
+end
 
-% [X,Y]
-% index = 1;
-% for row = 1:min(size(input_video, 1) , size(mvs_y(:,:,frame), 1))
-%     for col = 1:min(size(input_video, 2), size(mvs_x(:,:,frame), 2))
-%         %if mvs_x(row,col,frame) ~= 0 || mvs_x(row,col,frame) ~= 0
-%             X(index) = col;
-%             Y(index) = row;
-%             DX = mvs_x(row, col, frame);
-%             DY = mvs_y(row, col, frame);
-%             index = index + 1;
-%         %end
-%     end
-% end
+offset_x = x + u;
+offset_y = y + v;
+mc_previous = double(previous_video_frame);
+for col = 1 : 3
+	mc_previous(:, :, col) ...
+        = interp2(x, y, double(previous_video_frame(:, :, col)), ...
+                  offset_x, offset_y);
+end
 
-%DX = mvs_x(:, , frame);
-%DY = mvs_y(:, :, frame);
-%contour(X,Y,Z)
+figure(3);
+image(mc_previous);
+title('The motion compensated previous frame');
 
-% hold on;
-% quiver(X,Y,DX,DY,0)
-%hold off;
+figure(4);
+image(uint8(128 + double(previous_video_frame) - double(input_video_frame)));
+title('The (non-mc) frame difference');
