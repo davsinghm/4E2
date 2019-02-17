@@ -2,7 +2,7 @@ close all;
 clear;
 
 % exported mv format from ffmpeg
-% 
+%
 % frame_count: starting from 0.
 %              a counter in display order fed to avfilter
 % frame_type:  p, b (i or u: when unknown)
@@ -130,8 +130,8 @@ image(previous_video_frame);
 title('The previous frame');
 
 % fill u and v with same mv from block
-u = zeros(size(x));
-v = zeros(size(x));
+u = NaN(size(x));
+v = NaN(size(x));
 for i = 1 : size(mvs_y, 1)
     for j = 1 : size(mvs_x, 2)
         for mb_i = 1 : block_size_h
@@ -158,7 +158,7 @@ offset_x = x + u;
 offset_y = y + v;
 mc_previous = double(previous_video_frame);
 for col = 1 : 3
-	mcpic  ...
+	mcpic ...
         = interp2(x, y, double(previous_video_frame(:, :, col)), ...
                   offset_x, offset_y);
     [index] = find(isnan(mcpic));
