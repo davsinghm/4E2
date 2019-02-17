@@ -1,5 +1,5 @@
-close all
-clear
+close all;
+clear;
 
 % exported mv format from ffmpeg
 % 
@@ -25,10 +25,10 @@ if 1
     ret_code = system(strcat("cd FFmpeg ", ...
                     "&& make ", ...
                     "&& ./ffmpeg -y -i ", "../", orig_input_file, " ", ...
-                    "-c:v libx264 -crf 5 -x264opts ", x264_opts, " ", ...
+                    "-c:v libx264 -x264opts ", x264_opts, " ", ...
                     "../", input_file));
     if ret_code ~= 0
-        ret_code
+        fprintf("\nffmpeg exit code is: %d\n", ret_code);
         return;
     end
 end
@@ -45,7 +45,7 @@ if 1
         mvs_raw = fscanf(mvs_file, mv_format, [7, Inf]);
         fclose(mvs_file);
     else
-        ret_code
+        fprintf("\nffmpeg exit code is: %d\n", ret_code);
         return;
     end
 end
