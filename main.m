@@ -13,18 +13,8 @@ if 1
     sub_me = 1;
     bframes_no = 0;
     ref_frames = 0;
-    keyint = 2; % max interval b/w IDR-frames (aka keyframes)
-    x264_opts = strcat("no-psy=1:aq-mode=0:ref=", num2str(ref_frames), ":subme=", num2str(sub_me), ":keyint=", num2str(keyint));
-    % only keyint x264_opts = strcat("keyint=", num2str(keyint));
-    ret_code = system(strcat("cd FFmpeg ", ...
-                    "&& make ", ...
-                    "&& ./ffmpeg -y -i ", "../", orig_input_file, " ", ...
-                    "-c:v libx264 -x264opts ", x264_opts, " ", ...
-                    "../", input_file));
-    if ret_code ~= 0
-        fprintf("\nffmpeg exit code is: %d\n", ret_code);
-        return;
-    end
+    key_int = 2; % max interval b/w IDR-frames (aka keyframes)
+    x264_execute(orig_input_file, input_file, 22, ref_frames, sub_me, key_int);
 end
 
 if 1
