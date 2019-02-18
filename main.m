@@ -46,13 +46,12 @@ y = (1 : height)' * ones(1, width);
 offset_x = x + u;
 offset_y = y + v;
 mc_previous = double(previous_video_frame);
-for col = 1 : 3
-    mcpic = interp2(x, y, double(previous_video_frame(:, :, col)), ...
-                    offset_x, offset_y);
-    [index] = find(isnan(mcpic));
-    mcpic(index) = zeros(length(index), 1);
-    mc_previous(:, :, col) = mcpic;
+for chan = 1 : 3
+    mc_previous(:, :, chan) = interp2(x, y, double(previous_video_frame(:, :, chan)), ...
+                                     offset_x, offset_y);
 end
+% relace NaN values with zero in mc frame
+mc_previous(isnan(mc_previous)) = 0;
 
 figure(3);
 image(uint8(mc_previous));
