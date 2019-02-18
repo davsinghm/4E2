@@ -27,7 +27,7 @@ function [mvs_x, mvs_y] = extract_mvs(mvs_filename, block_size_w, block_size_h)
     fclose(mvs_file);
 
     % convert mvs_raw to more readable form
-    no_of_frames = max(mvs_raw(1, 2)) + 1; % max value of frame + 1
+    no_of_frames = max(mvs_raw(1, :)) + 2; % max value of frame + 2 (one for starting from zero, one for last frame?)
     mvs_x = NaN(1, 1, no_of_frames); % set initial values to NaN
     mvs_y = NaN(1, 1, no_of_frames);
     for j = 1 : size(mvs_raw, 2)
