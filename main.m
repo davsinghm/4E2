@@ -23,42 +23,69 @@ end
 if 1
     mvs_filename = "mvs.txt";
     ffmpeg_export_mvs(input_file, mvs_filename);
-    [mvs_x, mvs_y] = extract_mvs(mvs_filename, block_size_w, block_size_h);
+    [mvs_x, mvs_y, mvs_type, frames_type] = extract_mvs(mvs_filename, block_size_w, block_size_h);
 end
 
-% open the video for visualization
-frame_no = 78;
+no_of_frames = size(frames_type, 2);
+% frame data, mad
+frames_mc_mad = NaN(1, no_of_frames);
+frames_non_mc_mad = NaN(1, no_of_frames);
+
+% open the video
 video_reader = VideoReader(input_file);
-frame = read(video_reader, frame_no);
-visualize_mvs(frame, 1, mvs_x(:, :, frame_no), mvs_y(:, :, frame_no), block_size_w, block_size_h);
 
-previous_video_frame = read(video_reader, frame_no - 1);
-% figure(2);
-% image(previous_video_frame);
-% title('The previous frame');
+frame_no = 1;
+while hasFrame(video_reader)
+    frame = readFrame(video_reader);
 
-% fill u and v with same mv from block
-[height, width, chans] = size(frame);
-[u, v] = fill_dense_mvs_from_blocks([height, width], mvs_x(:, :, frame_no), mvs_y(:, :, frame_no), block_size_w, block_size_h);
-mc_previous = generate_mc_frame(previous_video_frame, u, v);
+    frame_mvs_x = mvs_x(:, :, frame_no);
+    frame_mvs_y = mvs_y(:, :, frame_no);
 
-figure(3);
-image(uint8(mc_previous));
-title('The motion compensated previous frame');
+    if 0
+        visualize_mvs(frame, 1, frame_mvs_x, frame_mvs_y, block_size_w, block_size_h);
+    end
 
-figure(4);
-image(uint8(128 + double(previous_video_frame) - double(frame)));
-title('The (non-mc) frame difference');
+    % figure(2);
+    % image(frame_previous);
+    % title('The previous frame');
 
-figure(5);
-image(uint8(128 + double(previous_video_frame) - double(mc_previous)));
-title('The MC frame difference');
+    % figure(3);
+    % image(uint8(mc_previous));
+    % title('The motion compensated previous frame');
+    %
+    % figure(4);
+    % image(uint8(128 + double(frame_previous) - double(frame)));
+    % title('The (non-mc) frame difference');
+    %
+    % figure(5);
+    % image(uint8(128 + double(frame_previous) - double(mc_previous)));
+    % title('The MC frame difference');
 
-non_mc_e = double(previous_video_frame) - double(frame);
-mc_e = double(frame) - double(mc_previous);
-mae_non_mc_e = mean(mean(abs(non_mc_e(:, :, 1))))
-mae_mc_e = mean(mean(abs(mc_e(:, :, 1))))
+    % ignore other frames for now
+    if frame_no > 1 && frames_type(frame_no) == 'p'
+        % fill u and v with same mv from block
+        [height, width, chans] = size(frame);
+        [u, v] = fill_dense_mvs_from_blocks([height, width], frame_mvs_x, frame_mvs_y, block_size_w, block_size_h);
+        mc_previous = generate_mc_frame(frame_previous, u, v);
 
+        mc_mad = mean2(abs(double(frame) - double(mc_previous)));
+        non_mc_mad = mean2(abs(double(frame) - double(frame_previous)));
+
+        frames_mc_mad(frame_no) = mc_mad;
+        frames_non_mc_mad(frame_no) = non_mc_mad;
+    end
+
+    frame_previous = frame;
+    frame_no = frame_no + 1;
+end
+
+% show mad graphs
+i_y = ~isnan(frames_mc_mad) & ~isnan(frames_non_mc_mad);
+frames_x = 1 : size(i_y(i_y), 2);
+plot(frames_x, frames_mc_mad(i_y));
+hold on;
+plot(frames_x, frames_non_mc_mad(i_y));
+hold off;
 
 % need to generate error based on original frames
 
