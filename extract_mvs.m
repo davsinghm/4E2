@@ -12,7 +12,7 @@
 %
 % @return [@mvs_x, @mvs_y]: one motion vector per block, NaN where no mvs was
 % found. block size is defined by @block_size_w and @block_size_h
-function [mvs_x, mvs_y] = extract_mvs(mvs_filename, block_size_w, block_size_h)
+function [mvs_x, mvs_y, mvs_type, frames_type] = extract_mvs(mvs_filename, block_size_w, block_size_h)
 
     % TODO convert mvs_raw to more readable form
     %      > mv val + position
@@ -27,26 +27,21 @@ function [mvs_x, mvs_y] = extract_mvs(mvs_filename, block_size_w, block_size_h)
     fclose(mvs_file);
 
     % convert mvs_raw to more readable form
-    no_of_frames = max(mvs_raw(1, :)) + 2; % max value of frame + 2 (one for starting from zero, one for last frame?)
+    no_of_frames = max(mvs_raw(1, :)) + 2; % max value of frame_no + 2 (one for starting from zero, one for last frame?)
+    mvs_type = zeros(1, 1, no_of_frames);
+    frames_type = zeros(1, no_of_frames);
     mvs_x = NaN(1, 1, no_of_frames); % set initial values to NaN
     mvs_y = NaN(1, 1, no_of_frames);
     for j = 1 : size(mvs_raw, 2)
-    	frame = mvs_raw(1, j) + 1; % frame start at 0
-        frame_type = mvs_raw(2, j); % (char/byte) p, b or u
-        % ignore other frames for now
-        if frame_type == 'p'
-            mv_dst = [mvs_raw(3, j), mvs_raw(4, j)]; % abs dst pos (x, y)
-            mv_src = [mvs_raw(5, j), mvs_raw(6, j)]; % abs src pos (x, y)
-            mvs_x( ...
-                  floor(mv_dst(2) / block_size_h) + 1, ...
-                  floor(mv_dst(1) / block_size_w) + 1, frame ...
-                 ) ...
-                  = mv_src(1) - mv_dst(1);
-            mvs_y( ...
-                  floor(mv_dst(2) / block_size_h) + 1, ...
-                  floor(mv_dst(1) / block_size_w) + 1, frame ...
-                 ) ...
-                  = mv_src(2) - mv_dst(2);
-        end
+    	  frame_no = mvs_raw(1, j) + 1; % frame start at 0
+        frames_type(frame_no) = mvs_raw(2, j); % (char/byte) p, b or u
+        mv_dst = [mvs_raw(3, j), mvs_raw(4, j)]; % abs dst pos (x, y)
+        mv_src = [mvs_raw(5, j), mvs_raw(6, j)]; % abs src pos (x, y)
+        x = floor(mv_dst(1) / block_size_w) + 1;
+        y = floor(mv_dst(2) / block_size_h) + 1;
+        mvs_type(y, x, frame_no) = mvs_raw(7, j);
+
+        mvs_x(y, x, frame_no) = mv_src(1) - mv_dst(1);
+        mvs_y(y, x, frame_no) = mv_src(2) - mv_dst(2);
     end
 end
