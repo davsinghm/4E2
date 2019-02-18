@@ -125,7 +125,7 @@ function visualize_mvs(frame, figure_no, mvs_x, mvs_y, block_size_w, block_size_
 end
 
 % interpolate mc frame. replaces zeros where mvs - u, v are NaN
-function mc_previous = generate_mc_frame(frame, u, v)
+function mc_frame = generate_mc_frame(frame, u, v)
     x = ones(size(frame, 1), 1) * (1 : size(frame, 2));
     y = (1 : size(frame, 1))' * ones(1, size(frame, 2));
 
@@ -135,12 +135,12 @@ function mc_previous = generate_mc_frame(frame, u, v)
 
     offset_x = x + u;
     offset_y = y + v;
-    mc_previous = double(frame);
+    mc_frame = double(frame);
     for chan = 1 : 3
-        mc_previous(:, :, chan) = interp2(x, y, double(frame(:, :, chan)), offset_x, offset_y);
+        mc_frame(:, :, chan) = interp2(x, y, double(frame(:, :, chan)), offset_x, offset_y);
     end
 
     % FIXME even when u and v have valid nums, it still gives NaN. figure out what makes them NaN
     % update: quick looks, seems like there are on edges when mvs are outside the frame
-    mc_previous(isnan(mc_previous)) = 0;
+    mc_frame(isnan(mc_frame)) = 0;
 end
