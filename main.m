@@ -27,55 +27,22 @@ if 1
 end
 
 % open the video for visualization
-frame = 78;
+frame_no = 78;
 video_reader = VideoReader(input_file);
-input_video_frame = read(video_reader, frame);
-figure(1);
-[rows, cols, chans] = size(input_video_frame);
-x = ones(rows, 1) * (1 : cols);
-y = (1 : rows)' * ones(1, cols);
-image((1:cols), (1:rows), input_video_frame);
-title(['Frame ', num2str(frame)]);
+frame = read(video_reader, frame_no);
+visualize_mvs(frame, 1, mvs_x(:, :, frame_no), mvs_y(:, :, frame_no), block_size_w, block_size_h);
 
-% show vectors using quiver
-xpos = x(floor(block_size_w / 2) : block_size_w : end, ...
-         floor(block_size_h / 2) : block_size_h : end);
-ypos = y(floor(block_size_w / 2) : block_size_w : end, ...
-         floor(block_size_h / 2) : block_size_h : end);
-u = NaN(size(xpos));
-v = NaN(size(xpos));
-for i = 1 : min(size(u, 1), size(mvs_x, 1))
-    for j = 1 : min(size(v, 2), size(mvs_y, 2))
-        u(i, j) = mvs_x(i, j, frame);
-        v(i, j) = mvs_y(i, j, frame);
-    end
-end
-
-%vx(1 : 1 : end, 1 : 1 : end) = -15 * ones(size(Xpos));
-%vy(1 : 1 : end, 1 : 1 : end) = 25 * ones(size(Xpos));
-hold on
-quiver(xpos, ypos, u, v, 0, 'r-', 'linewidth', 1); shg
-hold off;
-
-% Just to show how quiver works
-% Xpos = X(8 : 16 : end, 8 : 16 : end);
-% Ypos = Y(8 : 16 : end, 8 : 16 : end);
-% vx = ones(size(X)) * NaN;
-% vy = vx;
-% vx(8 : 16 : end, 8 : 16 : end) = -15 * ones(size(Xpos));
-% vy(8 : 16 : end, 8 : 16 : end) = 25 * ones(size(Xpos));
-% hold on
-% quiver(X, Y, vx, vy, 0, 'r-', 'linewidth', 2); shg
-% hold off;
-
-previous_video_frame = read(video_reader, frame - 1);
-figure(2);
-image(previous_video_frame);
-title('The previous frame');
+previous_video_frame = read(video_reader, frame_no - 1);
+% figure(2);
+% image(previous_video_frame);
+% title('The previous frame');
 
 % fill u and v with same mv from block
-[u, v] = fill_dense_mvs_from_blocks(size(x), mvs_x(:, :, frame), mvs_y(:, :, frame), block_size_w, block_size_h);
+[height, width, chans] = size(frame);
+[u, v] = fill_dense_mvs_from_blocks([height, width], mvs_x(:, :, frame_no), mvs_y(:, :, frame_no), block_size_w, block_size_h);
 
+x = ones(height, 1) * (1 : width);
+y = (1 : height)' * ones(1, width);
 offset_x = x + u;
 offset_y = y + v;
 mc_previous = double(previous_video_frame);
@@ -92,21 +59,22 @@ image(uint8(mc_previous));
 title('The motion compensated previous frame');
 
 figure(4);
-image(uint8(128 + double(previous_video_frame) - double(input_video_frame)));
+image(uint8(128 + double(previous_video_frame) - double(frame)));
 title('The (non-mc) frame difference');
 
 figure(5);
 image(uint8(128 + double(previous_video_frame) - double(mc_previous)));
 title('The MC frame difference');
 
-non_mc_e = double(previous_video_frame) - double(input_video_frame);
-mc_e = double(input_video_frame) - double(mc_previous);
+non_mc_e = double(previous_video_frame) - double(frame);
+mc_e = double(frame) - double(mc_previous);
 mae_non_mc_e = mean(mean(abs(non_mc_e(:, :, 1))))
 mae_mc_e = mean(mean(abs(mc_e(:, :, 1))))
 
 
 % need to generate error based on original frames
 
+% export mvs from @input_file and save to @mvs_filename
 function ffmpeg_export_mvs(input_file, mvs_filename)
     ret = system(sprintf("./FFmpeg/ffmpeg -y -flags2 +export_mvs -i %1$s -vf codecview=mv_type=fp+bp -c:v libx264 -preset ultrafast -crf 0 codecview_%1$s > %2$s", input_file, mvs_filename));
     if ret ~= 0
@@ -114,6 +82,7 @@ function ffmpeg_export_mvs(input_file, mvs_filename)
     end
 end
 
+% fill @u and @v matrices which are equal to @frame_size from @mvs_x, @mvs_y which are block level
 function [u, v] = fill_dense_mvs_from_blocks(frame_size, mvs_x, mvs_y, block_size_w, block_size_h)
     u = NaN(frame_size);
     v = NaN(frame_size);
@@ -138,4 +107,31 @@ function [u, v] = fill_dense_mvs_from_blocks(frame_size, mvs_x, mvs_y, block_siz
             end
         end
     end
+end
+
+% show vectors using quiver
+function visualize_mvs(frame, figure_no, mvs_x, mvs_y, block_size_w, block_size_h)
+    figure(figure_no);
+    [height, width, ~] = size(frame);
+    image((1 : width), (1 : height), frame);
+    title(['Frame ', num2str(figure_no)]);
+
+    x = ones(height, 1) * (1 : width);
+    y = (1 : height)' * ones(1, width);
+    x_pos = x(floor(block_size_w / 2) : block_size_w : end, ...
+              floor(block_size_h / 2) : block_size_h : end);
+    y_pos = y(floor(block_size_w / 2) : block_size_w : end, ...
+              floor(block_size_h / 2) : block_size_h : end);
+    u = NaN(size(x_pos));
+    v = NaN(size(y_pos));
+    for i = 1 : min(size(u, 1), size(mvs_x, 1))
+        for j = 1 : min(size(v, 2), size(mvs_y, 2))
+            u(i, j) = mvs_x(i, j);
+            v(i, j) = mvs_y(i, j);
+        end
+    end
+
+    hold on;
+    quiver(x_pos, y_pos, u, v, 0, 'r-', 'linewidth', 1); shg;
+    hold off;
 end
