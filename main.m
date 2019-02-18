@@ -40,18 +40,7 @@ previous_video_frame = read(video_reader, frame_no - 1);
 % fill u and v with same mv from block
 [height, width, chans] = size(frame);
 [u, v] = fill_dense_mvs_from_blocks([height, width], mvs_x(:, :, frame_no), mvs_y(:, :, frame_no), block_size_w, block_size_h);
-
-x = ones(height, 1) * (1 : width);
-y = (1 : height)' * ones(1, width);
-offset_x = x + u;
-offset_y = y + v;
-mc_previous = double(previous_video_frame);
-for chan = 1 : 3
-    mc_previous(:, :, chan) = interp2(x, y, double(previous_video_frame(:, :, chan)), ...
-                                     offset_x, offset_y);
-end
-% relace NaN values with zero in mc frame
-mc_previous(isnan(mc_previous)) = 0;
+mc_previous = generate_mc_frame(previous_video_frame, u, v);
 
 figure(3);
 image(uint8(mc_previous));
@@ -133,4 +122,25 @@ function visualize_mvs(frame, figure_no, mvs_x, mvs_y, block_size_w, block_size_
     hold on;
     quiver(x_pos, y_pos, u, v, 0, 'r-', 'linewidth', 1); shg;
     hold off;
+end
+
+% interpolate mc frame. replaces zeros where mvs - u, v are NaN
+function mc_previous = generate_mc_frame(frame, u, v)
+    x = ones(size(frame, 1), 1) * (1 : size(frame, 2));
+    y = (1 : size(frame, 1))' * ones(1, size(frame, 2));
+
+    % relace NaN values with zero in mc frame
+    u(isnan(u)) = 0;
+    v(isnan(v)) = 0;
+
+    offset_x = x + u;
+    offset_y = y + v;
+    mc_previous = double(frame);
+    for chan = 1 : 3
+        mc_previous(:, :, chan) = interp2(x, y, double(frame(:, :, chan)), offset_x, offset_y);
+    end
+
+    % FIXME even when u and v have valid nums, it still gives NaN. figure out what makes them NaN
+    % update: quick looks, seems like there are on edges when mvs are outside the frame
+    mc_previous(isnan(mc_previous)) = 0;
 end
