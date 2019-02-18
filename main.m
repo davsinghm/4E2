@@ -22,17 +22,8 @@ end
 
 if 1
     mvs_filename = "mvs.txt";
-    ret_code = system(strcat("cd FFmpeg ", ...
-                    "&& make ", ...
-                    "&& ./ffmpeg -y -flags2 +export_mvs -i ", "../", input_file, " ", ...
-                    "-vf codecview=mv_type=fp+bp -c:v libx264 -preset ultrafast -crf 0 ", ...
-                    "../test_out.mp4 > ../", mvs_filename));
-    if ret_code == 0
-        [mvs_x, mvs_y] = extract_mvs(mvs_filename, block_size_w, block_size_h);
-    else
-        fprintf("\nffmpeg exit code is: %d\n", ret_code);
-        return;
-    end
+    ffmpeg_export_mvs(input_file, mvs_filename);
+    [mvs_x, mvs_y] = extract_mvs(mvs_filename, block_size_w, block_size_h);
 end
 
 % open the video for visualization
@@ -139,3 +130,10 @@ mae_mc_e = mean(mean(abs(mc_e(:, :, 1))))
 
 
 % need to generate error based on original frames
+
+function ffmpeg_export_mvs(input_file, mvs_filename)
+    ret = system(sprintf("./FFmpeg/ffmpeg -y -flags2 +export_mvs -i %1$s -vf codecview=mv_type=fp+bp -c:v libx264 -preset ultrafast -crf 0 codecview_%1$s > %2$s", input_file, mvs_filename));
+    if ret ~= 0
+        error("ffmpeg exit code is: %d", ret);
+    end
+end
