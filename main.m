@@ -7,6 +7,7 @@ input_file = "test.mp4";
 block_size_w = 16;
 block_size_h = 16;
 
+system("cd FFmpeg && make");
 % encode orignal file to input_file with specific settings (gop size etc)
 if 1
     orig_input_file = "test_orig.mp4";
