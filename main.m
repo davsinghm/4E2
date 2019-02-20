@@ -8,7 +8,9 @@ block_size_w = 16;
 block_size_h = 16;
 
 % "make" sure
-system("cd FFmpeg && make");
+if system("cd FFmpeg && make") ~= 0
+    error("make error");
+end
 
 % encode orignal file to input_file with specific settings (gop size etc)
 if 1
