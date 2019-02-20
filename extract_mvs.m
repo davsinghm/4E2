@@ -1,7 +1,7 @@
 % exported mv format from ffmpeg
 %
 % read the mvs from file @mvs_filename in following format:
-% "frame_count: %d, frame_type: %c, mv_dst: (%d, %d), mv_src: (%d, %d), mv_type: %c, motion: (%d, %d, %d)\n";
+% "frame_count: %d, frame_type: %c, mv_dst: (%d, %d), mv_src: (%d, %d), mv_type: %c, motion: (%d, %d, %d), mb: (%d, %d)\n";
 % where:
 % frame_count: starting from 0.
 %              a counter in display order fed to avfilter
@@ -13,6 +13,7 @@
 %              motion vector:
 %                  mv_src_x = mv_dst_x + motion_x / motion_scale
 %                  mv_src_y = mv_dst_y + motion_y / motion_scale
+% mb:         macroblock width and height
 %
 % @return [@mvs_x, @mvs_y]: one motion vector per block, NaN where no mvs was
 % found. block size is defined by @block_size_w and @block_size_h
@@ -20,10 +21,10 @@ function [mvs_x, mvs_y, mvs_type, frames_type] = extract_mvs(mvs_filename, block
 
     % TODO make sure the mvs are only at block_sizes, i.e. no sub blocks
 
-    mv_format = "frame_count: %d, frame_type: %c, mv_dst: (%d, %d), mv_src: (%d, %d), mv_type: %c, motion: (%d, %d, %d)\n";
+    mv_format = "frame_count: %d, frame_type: %c, mv_dst: (%d, %d), mv_src: (%d, %d), mv_type: %c, motion: (%d, %d, %d), mb: (%d, %d)\n";
 
     mvs_file = fopen(mvs_filename, 'r');
-    mvs_raw = fscanf(mvs_file, mv_format, [10, Inf]);
+    mvs_raw = fscanf(mvs_file, mv_format, [12, Inf]);
     fclose(mvs_file);
 
     % convert mvs_raw to more readable form
