@@ -262,12 +262,13 @@ static int filter_frame(AVFilterLink *inlink, AVFrame *frame)
                     const int is_bp = direction == 1 && (s->mv_type & MV_TYPE_BACK);
 
                     //use printf instead of av_log, no filters -> faster
-                    printf("frame_count: %d, frame_type: %c, mv_dst: (%d, %d), mv_src: (%d, %d), mv_type: %c, motion: (%d, %d, %d)\n",
+                    printf("frame_count: %d, frame_type: %c, mv_dst: (%d, %d), mv_src: (%d, %d), mv_type: %c, motion: (%d, %d, %d), mb: (%d, %d)\n",
                         s->frame_count,
                         frame->pict_type == AV_PICTURE_TYPE_P ? 'p' : (frame->pict_type == AV_PICTURE_TYPE_B ? 'b' : (frame->pict_type == AV_PICTURE_TYPE_I ? 'i' : 'u')),
                         mv->dst_x, mv->dst_y, mv->src_x, mv->src_y,
                         direction == 0 ? 'f' : direction == 1 ? 'b' : 'u',
-                        mv->motion_x, mv->motion_y, mv->motion_scale
+                        mv->motion_x, mv->motion_y, mv->motion_scale,
+                        mv->w, mv->h
                         );
 
                     if ((!s->frame_type && (is_fp || is_bp)) ||
