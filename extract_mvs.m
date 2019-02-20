@@ -1,7 +1,7 @@
 % exported mv format from ffmpeg
 %
 % read the mvs from file @mvs_filename in following format:
-% "frame_count: %d, frame_type: %c, mv_dst: (%d, %d), mv_src: (%d, %d), mv_type: %c\n";
+% "frame_count: %d, frame_type: %c, mv_dst: (%d, %d), mv_src: (%d, %d), mv_type: %c, motion: (%d, %d, %d)\n";
 % where:
 % frame_count: starting from 0.
 %              a counter in display order fed to avfilter
@@ -9,6 +9,10 @@
 % mv_dst:      "Absolute destination position. Can be outside the frame area."
 % mv_src:      "Absolute source position. Can be outside the frame area.fp"
 % mv_type:     f (forward predicted), b (backward predicted) (, u: when unknown)
+% motion:      motion_x, motion_y and motion_scale
+%              motion vector:
+%                  mv_src_x = mv_dst_x + motion_x / motion_scale
+%                  mv_src_y = mv_dst_y + motion_y / motion_scale
 %
 % @return [@mvs_x, @mvs_y]: one motion vector per block, NaN where no mvs was
 % found. block size is defined by @block_size_w and @block_size_h
@@ -20,10 +24,10 @@ function [mvs_x, mvs_y, mvs_type, frames_type] = extract_mvs(mvs_filename, block
     %      > constants for vals at skip block instead of zeroes in mvs_x,y
     %      > convert src to mb for mem management ?
 
-    mv_format = "frame_count: %d, frame_type: %c, mv_dst: (%d, %d), mv_src: (%d, %d), mv_type: %c\n";
+    mv_format = "frame_count: %d, frame_type: %c, mv_dst: (%d, %d), mv_src: (%d, %d), mv_type: %c, motion: (%d, %d, %d)\n";
 
     mvs_file = fopen(mvs_filename, 'r');
-    mvs_raw = fscanf(mvs_file, mv_format, [7, Inf]);
+    mvs_raw = fscanf(mvs_file, mv_format, [10, Inf]);
     fclose(mvs_file);
 
     % convert mvs_raw to more readable form
@@ -41,7 +45,7 @@ function [mvs_x, mvs_y, mvs_type, frames_type] = extract_mvs(mvs_filename, block
         y = floor(mv_dst(2) / block_size_h) + 1;
         mvs_type(y, x, frame_no) = mvs_raw(7, j);
 
-        mvs_x(y, x, frame_no) = mv_src(1) - mv_dst(1);
-        mvs_y(y, x, frame_no) = mv_src(2) - mv_dst(2);
+        mvs_x(y, x, frame_no) = mvs_raw(8, j) / mvs_raw(10, j); % motion_x / motion_scale
+        mvs_y(y, x, frame_no) = mvs_raw(9, j) / mvs_raw(10, j); % motion_y / motion_scale
     end
 end
