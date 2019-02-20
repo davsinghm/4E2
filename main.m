@@ -15,11 +15,11 @@ end
 % encode orignal file to input_file with specific settings (gop size etc)
 if 1
     orig_input_file = "test_orig.mp4";
-    sub_me = 1;
+    sub_me = 1; % subme: 7: rd (default), 0: full pel only, 1: qpel sad 1 iter, 2: qpel sad 1 iter
     bframes_no = 0;
     ref_frames = 0;
     key_int = 2; % max interval b/w IDR-frames (aka keyframes)
-    x264_execute(orig_input_file, input_file, 22, ref_frames, sub_me, key_int);
+    x264_execute(orig_input_file, input_file, 22, bframes_no, ref_frames, key_int);
 end
 
 if 1
