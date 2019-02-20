@@ -18,11 +18,7 @@
 % found. block size is defined by @block_size_w and @block_size_h
 function [mvs_x, mvs_y, mvs_type, frames_type] = extract_mvs(mvs_filename, block_size_w, block_size_h)
 
-    % TODO convert mvs_raw to more readable form
-    %      > mv val + position
-    %      > per frame matrix
-    %      > constants for vals at skip block instead of zeroes in mvs_x,y
-    %      > convert src to mb for mem management ?
+    % TODO make sure the mvs are only at block_sizes, i.e. no sub blocks
 
     mv_format = "frame_count: %d, frame_type: %c, mv_dst: (%d, %d), mv_src: (%d, %d), mv_type: %c, motion: (%d, %d, %d)\n";
 
