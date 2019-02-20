@@ -19,8 +19,6 @@
 % found. block size is defined by @block_size_w and @block_size_h
 function [mvs_x, mvs_y, mvs_type, frames_type] = extract_mvs(mvs_filename, block_size_w, block_size_h)
 
-    % TODO make sure the mvs are only at block_sizes, i.e. no sub blocks
-
     mv_format = "frame_count: %d, frame_type: %c, mv_dst: (%d, %d), mv_src: (%d, %d), mv_type: %c, motion: (%d, %d, %d), mb: (%d, %d)\n";
 
     mvs_file = fopen(mvs_filename, 'r');
@@ -38,11 +36,19 @@ function [mvs_x, mvs_y, mvs_type, frames_type] = extract_mvs(mvs_filename, block
         frames_type(frame_no) = mvs_raw(2, j); % (char/byte) p, b or u
         mv_dst = [mvs_raw(3, j), mvs_raw(4, j)]; % abs dst pos (x, y)
         mv_src = [mvs_raw(5, j), mvs_raw(6, j)]; % abs src pos (x, y)
-        x = floor(mv_dst(1) / block_size_w) + 1;
-        y = floor(mv_dst(2) / block_size_h) + 1;
-        mvs_type(y, x, frame_no) = mvs_raw(7, j);
-
-        mvs_x(y, x, frame_no) = mvs_raw(8, j) / mvs_raw(10, j); % motion_x / motion_scale
-        mvs_y(y, x, frame_no) = mvs_raw(9, j) / mvs_raw(10, j); % motion_y / motion_scale
+        w = mvs_raw(11, j);
+        h = mvs_raw(12, j);
+        % if w or h > block_size_*, copy same mvs to each sub-block
+        for mb_j = 0 : max(1, floor(w / block_size_w)) - 1
+            for mb_i = 0 : max(1, floor(h / block_size_h)) - 1
+                mb_x = floor(floor((mv_dst(1) - w / 2)) / block_size_w) + 1; % TODO this overlaps the block in the loop. clip the loop over a parent block position
+                mb_y = floor(floor((mv_dst(2) - h / 2)) / block_size_h) + 1;
+                x = mb_x + mb_j;
+                y = mb_y + mb_i;
+                mvs_type(y, x, frame_no) = mvs_raw(7, j);
+                mvs_x(y, x, frame_no) = mvs_raw(8, j) / mvs_raw(10, j); % motion_x / motion_scale
+                mvs_y(y, x, frame_no) = mvs_raw(9, j) / mvs_raw(10, j); % motion_y / motion_scale
+            end
+        end
     end
 end
