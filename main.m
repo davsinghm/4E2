@@ -51,24 +51,9 @@ while hasFrame(video_reader)
         visualize_mvs(frame, 1, frame_mvs_x, frame_mvs_y, block_size_w, block_size_h);
     end
 
-    % figure(2);
-    % image(frame_previous);
-    % title('The previous frame');
-
-    % figure(3);
-    % image(uint8(mc_previous));
-    % title('The motion compensated previous frame');
-    %
-    % figure(4);
-    % image(uint8(128 + double(frame_previous) - double(frame)));
-    % title('The (non-mc) frame difference');
-    %
-    % figure(5);
-    % image(uint8(128 + double(frame_previous) - double(mc_previous)));
-    % title('The MC frame difference');
-
     % ignore other frames for now
     if frame_no > 1 && frames_type(frame_no) == 'p'
+
         % fill u and v with same mv from block
         [height, width, chans] = size(frame);
         [u, v] = fill_dense_mvs_from_blocks([height, width], frame_mvs_x, frame_mvs_y, block_size_w, block_size_h);
@@ -79,6 +64,22 @@ while hasFrame(video_reader)
 
         frames_mc_mad(frame_no) = mc_mad;
         frames_non_mc_mad(frame_no) = non_mc_mad;
+
+        % figure(2);
+        % image(frame_previous);
+        % title('The previous frame');
+        %
+        % figure(3);
+        % image(uint8(mc_previous));
+        % title('The motion compensated previous frame');
+        %
+        % figure(4);
+        % image(uint8(128 + double(frame_previous) - double(frame)));
+        % title('The (non-mc) frame difference');
+        %
+        % figure(5);
+        % image(uint8(128 + double(frame_previous) - double(mc_previous)));
+        % title('The MC frame difference');
     end
 
     frame_previous = frame;
