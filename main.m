@@ -4,13 +4,17 @@ clear;
 input_file = "test.mp4";
 
 % block size
-block_size_w = 16;
-block_size_h = 16;
+block_size_w = 4;
+block_size_h = 4;
 
 % "make" sure
 if system("cd FFmpeg && make") ~= 0
     error("make error");
 end
+
+avg_frames_mc_mad = NaN(1, 51);
+avg_frames_non_mc_mad = NaN(1, 51);
+for crf = 1 : 51
 
 % encode orignal file to input_file with specific settings (gop size etc)
 if 1
@@ -19,7 +23,7 @@ if 1
     bframes_no = 0;
     ref_frames = 0;
     key_int = 2; % max interval b/w IDR-frames (aka keyframes)
-    x264_execute(orig_input_file, input_file, 22, bframes_no, ref_frames, key_int);
+    x264_execute(orig_input_file, input_file, crf, bframes_no, ref_frames, key_int);
 end
 
 if 1
@@ -82,6 +86,7 @@ while hasFrame(video_reader)
 end
 
 % show mad graphs
+figure(1);
 i_y = ~isnan(frames_mc_mad) & ~isnan(frames_non_mc_mad);
 frames_x = 1 : size(i_y(i_y), 2);
 plot(frames_x, frames_mc_mad(i_y));
@@ -89,6 +94,17 @@ hold on;
 plot(frames_x, frames_non_mc_mad(i_y));
 hold off;
 
+avg_frames_mc_mad(crf) = mean(frames_mc_mad(i_y));
+avg_frames_non_mc_mad(crf) = mean(frames_non_mc_mad(i_y));
+
+end
+
+figure(2);
+avg_frames_x = 1 : size(avg_frames_mc_mad, 2);
+plot(avg_frames_x, avg_frames_mc_mad);
+hold on;
+plot(avg_frames_x, avg_frames_non_mc_mad);
+hold off;
 % need to generate error based on original frames
 
 % export mvs from @input_file and save to @mvs_filename
