@@ -6,6 +6,7 @@ input_file = "test.mp4";
 % block size
 block_size_w = 4;
 block_size_h = 4;
+mb_size = [block_size_h, block_size_w];
 
 % "make" sure
 if system("cd FFmpeg && make") ~= 0
@@ -14,7 +15,7 @@ end
 
 avg_frames_mc_mad = NaN(1, 51);
 avg_frames_non_mc_mad = NaN(1, 51);
-for crf = 1 : 51
+for crf = 17 : 17
 
 % encode orignal file to input_file with specific settings (gop size etc)
 if 1
@@ -56,6 +57,8 @@ while hasFrame(video_reader)
 
         % fill u and v with same mv from block
         [height, width, chans] = size(frame);
+        %
+        fast_motion(frame, frame_prev, mvs_x, mvs_y, mb_size);
         [u, v] = fill_dense_mvs_from_blocks([height, width], frame_mvs_x, frame_mvs_y, block_size_w, block_size_h);
         mc_previous = generate_mc_frame(frame_prev, u, v);
 
