@@ -57,16 +57,16 @@ while hasFrame(video_reader)
         % fill u and v with same mv from block
         [height, width, chans] = size(frame);
         [u, v] = fill_dense_mvs_from_blocks([height, width], frame_mvs_x, frame_mvs_y, block_size_w, block_size_h);
-        mc_previous = generate_mc_frame(frame_previous, u, v);
+        mc_previous = generate_mc_frame(frame_prev, u, v);
 
         mc_mad = mean2(abs(double(frame) - double(mc_previous)));
-        non_mc_mad = mean2(abs(double(frame) - double(frame_previous)));
+        non_mc_mad = mean2(abs(double(frame) - double(frame_prev)));
 
         frames_mc_mad(frame_no) = mc_mad;
         frames_non_mc_mad(frame_no) = non_mc_mad;
 
         % figure(2);
-        % image(frame_previous);
+        % image(frame_prev);
         % title('The previous frame');
         %
         % figure(3);
@@ -74,15 +74,15 @@ while hasFrame(video_reader)
         % title('The motion compensated previous frame');
         %
         % figure(4);
-        % image(uint8(128 + double(frame_previous) - double(frame)));
+        % image(uint8(128 + double(frame_prev) - double(frame)));
         % title('The (non-mc) frame difference');
         %
         % figure(5);
-        % image(uint8(128 + double(frame_previous) - double(mc_previous)));
+        % image(uint8(128 + double(frame_prev) - double(mc_previous)));
         % title('The MC frame difference');
     end
 
-    frame_previous = frame;
+    frame_prev = frame;
     frame_no = frame_no + 1;
 end
 
