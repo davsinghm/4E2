@@ -37,6 +37,7 @@ no_of_frames = size(frames_type, 2);
 % frame data, mad
 frames_mc_mad = NaN(1, no_of_frames);
 frames_non_mc_mad = NaN(1, no_of_frames);
+frames_smoothness_cost = NaN(1, no_of_frames);
 
 % open the video
 video_reader = VideoReader(input_file);
@@ -64,10 +65,12 @@ while hasFrame(video_reader)
 
         mc_mad = mean2(abs(double(frame) - double(mc_previous)));
         non_mc_mad = mean2(abs(double(frame) - double(frame_prev)));
+        smoothness_cost = smoothness_cost_frame(frame_mvs_x, frame_mvs_y);
 
         frames_mc_mad(frame_no) = mc_mad;
         frames_non_mc_mad(frame_no) = non_mc_mad;
-        fprintf("frame_no: %03d, diff: %.16f\n", frame_no, mc_mad);
+        frames_smoothness_cost(frame_no) = smoothness_cost;
+        fprintf("frame_no: %03d, mc_diff: %.16f, smoothness: %d\n", frame_no, mc_mad, smoothness_cost);
 
         % figure(2);
         % image(frame_prev);
@@ -92,11 +95,12 @@ end
 
 % show mad graphs
 figure(1);
+hold on;
 i_y = ~isnan(frames_mc_mad) & ~isnan(frames_non_mc_mad);
 frames_x = 1 : size(i_y(i_y), 2);
 plot(frames_x, frames_mc_mad(i_y));
-hold on;
 plot(frames_x, frames_non_mc_mad(i_y));
+plot(frames_x, frames_smoothness_cost(i_y));
 hold off;
 
 avg_frames_mc_mad(crf) = mean(frames_mc_mad(i_y));
