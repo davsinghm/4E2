@@ -5,58 +5,61 @@ function [mvs_out_x, mvs_out_y] = fast_motion(frame, frame_prev, mvs_x, mvs_y, m
     if write_stats
         stats_file = fopen(sprintf('fm_stats_frame%03d.txt', frame_no), 'w');
     end
-    % iteration is for skipping the block in current frame
-    for iter = 0 : 2
-        for mb_x = 2 + iter : 3 : mbs_width - 1
-            for mb_y = 2 + iter : 3 : mbs_height - 1
-                % start with current motion vector
-                min_cost = cost_mad(frame, frame_prev, mvs_x(mb_y, mb_x), mvs_y(mb_y, mb_x), mb_x, mb_y, mb_size);
 
-                % prepare candidate mvs
-                candidates = 1;
-                cand_mv_x = zeros(1, 9);
-                cand_mv_y = zeros(1, 9);
-                for cx = -1 : 1
-                    for cy = -1 : 1
-                        if (~isnan(mvs_x(mb_y + cy, mb_x + cx)) && ~isnan(mvs_x(mb_y + cy, mb_x + cx)))
-                            cand_mv_x(candidates) = mvs_x(mb_y + cy, mb_x + cx);
-                            cand_mv_y(candidates) = mvs_y(mb_y + cy, mb_x + cx);
+    for iter = 1 : 5
+        % this iteration is for jumping the block in current frame
+        for jump = 0 : 2
+            for mb_x = 2 + jump : 3 : mbs_width - 1
+                for mb_y = 2 + jump : 3 : mbs_height - 1
+                    % start with current motion vector
+                    min_cost = cost_mad(frame, frame_prev, mvs_x(mb_y, mb_x), mvs_y(mb_y, mb_x), mb_x, mb_y, mb_size);
+
+                    % prepare candidate mvs
+                    candidates = 1;
+                    cand_mv_x = zeros(1, 9);
+                    cand_mv_y = zeros(1, 9);
+                    for cx = -1 : 1
+                        for cy = -1 : 1
+                            if (~isnan(mvs_x(mb_y + cy, mb_x + cx)) && ~isnan(mvs_x(mb_y + cy, mb_x + cx)))
+                                cand_mv_x(candidates) = mvs_x(mb_y + cy, mb_x + cx);
+                                cand_mv_y(candidates) = mvs_y(mb_y + cy, mb_x + cx);
+                            end
+                            candidates = candidates + 1;
                         end
-                        candidates = candidates + 1;
+                    end
+
+                    % add for each +/- offset
+                if 0
+                    c_no = candidates;
+                    for offset = 1 : 2
+                        for c_i = 1 : c_no
+                            cand_mv_x(candidates) = cand_mv_x(c_i) + offset;
+                            cand_mv_y(candidates) = cand_mv_y(c_i) + offset;
+                            candidates = candidates + 1;
+                            cand_mv_x(candidates) = cand_mv_x(c_i) + offset;
+                            cand_mv_y(candidates) = cand_mv_y(c_i) - offset;
+                            candidates = candidates + 1;
+                            cand_mv_x(candidates) = cand_mv_x(c_i) - offset;
+                            cand_mv_y(candidates) = cand_mv_y(c_i) + offset;
+                            candidates = candidates + 1;
+                            cand_mv_x(candidates) = cand_mv_x(c_i) - offset;
+                            cand_mv_y(candidates) = cand_mv_y(c_i) - offset;
+                            candidates = candidates + 1;
+                        end
                     end
                 end
 
-                % add for each +/- offset
-if 0
-                c_no = candidates;
-                for offset = 1 : 2
-                    for c_i = 1 : c_no
-                        cand_mv_x(candidates) = cand_mv_x(c_i) + offset;
-                        cand_mv_y(candidates) = cand_mv_y(c_i) + offset;
-                        candidates = candidates + 1;
-                        cand_mv_x(candidates) = cand_mv_x(c_i) + offset;
-                        cand_mv_y(candidates) = cand_mv_y(c_i) - offset;
-                        candidates = candidates + 1;
-                        cand_mv_x(candidates) = cand_mv_x(c_i) - offset;
-                        cand_mv_y(candidates) = cand_mv_y(c_i) + offset;
-                        candidates = candidates + 1;
-                        cand_mv_x(candidates) = cand_mv_x(c_i) - offset;
-                        cand_mv_y(candidates) = cand_mv_y(c_i) - offset;
-                        candidates = candidates + 1;
-                    end
-                end
-end
-
-                % test new candidates
-                for cand = 1 : candidates - 1
-                    cost = cost_mad(frame, frame_prev, cand_mv_x(cand), cand_mv_y(cand), mb_x, mb_y, mb_size);
-                    if cost < min_cost
-                        if write_stats
-                            fprintf(stats_file, 'mb: (%d, %d), min_cost: %d, new_cost: %d, mv: (%d, %d), new_mv: (%d, %d)\n', mb_x, mb_y, min_cost, cost, mvs_x(mb_y, mb_x), mvs_y(mb_y, mb_x), cand_mv_x(cand), cand_mv_y(cand));
+                    % test new candidates
+                    for cand = 1 : candidates - 1
+                        cost = cost_mad(frame, frame_prev, cand_mv_x(cand), cand_mv_y(cand), mb_x, mb_y, mb_size);
+                        if cost < min_cost
+                            if write_stats
+                                fprintf(stats_file, 'mb: (%d, %d), min_cost: %d, new_cost: %d, mv: (%d, %d), new_mv: (%d, %d)\n', mb_x, mb_y, min_cost, cost, mvs_x(mb_y, mb_x), mvs_y(mb_y, mb_x), cand_mv_x(cand), cand_mv_y(cand));
+                            end
+                            mvs_x(mb_y, mb_x) = cand_mv_x(cand);
+                            mvs_y(mb_y, mb_x) = cand_mv_y(cand);
+                            min_cost = cost;
                         end
-                        mvs_x(mb_y, mb_x) = cand_mv_x(cand);
-                        mvs_y(mb_y, mb_x) = cand_mv_y(cand);
-                        min_cost = cost;
                     end
                 end
             end
