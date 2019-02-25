@@ -57,8 +57,8 @@ while hasFrame(video_reader)
 
         % fill u and v with same mv from block
         [height, width, chans] = size(frame);
-        %
-        fast_motion(frame, frame_prev, mvs_x, mvs_y, mb_size);
+        % fast motion: refine motion vectors
+        [frame_mvs_x, frame_mvs_y] = fast_motion(frame, frame_prev, frame_mvs_x, frame_mvs_y, mb_size, frame_no);
         [u, v] = fill_dense_mvs_from_blocks([height, width], frame_mvs_x, frame_mvs_y, block_size_w, block_size_h);
         mc_previous = generate_mc_frame(frame_prev, u, v);
 
@@ -67,6 +67,7 @@ while hasFrame(video_reader)
 
         frames_mc_mad(frame_no) = mc_mad;
         frames_non_mc_mad(frame_no) = non_mc_mad;
+        fprintf("frame_no: %03d, diff: %.16f\n", frame_no, mc_mad);
 
         % figure(2);
         % image(frame_prev);
