@@ -9,13 +9,14 @@ function cost = smoothness_cost_frame(mvs_x, mvs_y)
             costs(mb_y, mb_x) = smoothness_cost_mv(mvs_x(mb_y, mb_x), mvs_y(mb_y, mb_x), neighbors_x, neighbors_y);
         end
     end
+    cost = mean2(costs);
 end
 
 function [neighbors_x, neighbors_y] = get_neighbors(mb_x, mb_y, mvs_x, mvs_y)
     neighbors_x = nan(3, 3);
     neighbors_y = nan(3, 3);
     start_x = -1; start_y = -1;
-    end_x = 1; end_y = -1;
+    end_x = 1; end_y = 1;
     if (mb_x == 1)
         start_x = 0;
     end
@@ -30,6 +31,8 @@ function [neighbors_x, neighbors_y] = get_neighbors(mb_x, mb_y, mvs_x, mvs_y)
     end
     for nx = start_x : end_x
         for ny = start_y : end_y
+            neighbors_x(2 + ny, 2 + nx) = mvs_x(mb_y + ny, mb_x + nx);
+            neighbors_y(2 + ny, 2 + nx) = mvs_y(mb_y + ny, mb_x + nx);
         end
     end
 end
