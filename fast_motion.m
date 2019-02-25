@@ -18,13 +18,15 @@ function [mvs_out_x, mvs_out_y] = fast_motion(frame, frame_prev, mvs_x, mvs_y, m
                 cand_mv_y = zeros(1, 9);
                 for cx = -1 : 1
                     for cy = -1 : 1
-                        cand_mv_x(candidates) = mvs_x(mb_y + cy, mb_x + cx);
-                        cand_mv_y(candidates) = mvs_y(mb_y + cy, mb_x + cx);
+                        if (~isnan(mvs_x(mb_y + cy, mb_x + cx)) && ~isnan(mvs_x(mb_y + cy, mb_x + cx)))
+                            cand_mv_x(candidates) = mvs_x(mb_y + cy, mb_x + cx);
+                            cand_mv_y(candidates) = mvs_y(mb_y + cy, mb_x + cx);
+                        end
                         candidates = candidates + 1;
                     end
                 end
 
-                % try new candidates
+                % test new candidates
                 for cand = 1 : candidates - 1
                     cost = cost_mad(frame, frame_prev, cand_mv_x(cand), cand_mv_y(cand), mb_x, mb_y, mb_size);
                     if cost < min_cost
