@@ -15,9 +15,10 @@
 %                  mv_src_y = mv_dst_y + motion_y / motion_scale
 % mb:         macroblock width and height
 %
+% @param      enable_subpel: if disabled, the value will be rounded off
 % @return [@mvs_x, @mvs_y]: one motion vector per block, NaN where no mvs was
 % found. block size is defined by @block_size_w and @block_size_h
-function [mvs_x, mvs_y, mvs_type, frames_type] = extract_mvs(mvs_filename, block_size_w, block_size_h)
+function [mvs_x, mvs_y, mvs_type, frames_type] = extract_mvs(mvs_filename, block_size_w, block_size_h, enable_subpel)
 
     mv_format = "frame_count: %d, frame_type: %c, mv_dst: (%d, %d), mv_src: (%d, %d), mv_type: %c, motion: (%d, %d, %d), mb: (%d, %d)\n";
 
@@ -46,8 +47,13 @@ function [mvs_x, mvs_y, mvs_type, frames_type] = extract_mvs(mvs_filename, block
                 x = mb_x + mb_j;
                 y = mb_y + mb_i;
                 mvs_type(y, x, frame_no) = mvs_raw(7, j);
-                mvs_x(y, x, frame_no) = mvs_raw(8, j) / mvs_raw(10, j); % motion_x / motion_scale
-                mvs_y(y, x, frame_no) = mvs_raw(9, j) / mvs_raw(10, j); % motion_y / motion_scale
+                if enable_subpel
+                    mvs_x(y, x, frame_no) = mvs_raw(8, j) / mvs_raw(10, j); % motion_x / motion_scale
+                    mvs_y(y, x, frame_no) = mvs_raw(9, j) / mvs_raw(10, j); % motion_y / motion_scale
+                else
+                    mvs_x(y, x, frame_no) = floor(mvs_raw(8, j) / mvs_raw(10, j)); % motion_x / motion_scale
+                    mvs_y(y, x, frame_no) = floor(mvs_raw(9, j) / mvs_raw(10, j)); % motion_y / motion_scale
+              end
             end
         end
     end
