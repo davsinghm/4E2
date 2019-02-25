@@ -26,6 +26,27 @@ function [mvs_out_x, mvs_out_y] = fast_motion(frame, frame_prev, mvs_x, mvs_y, m
                     end
                 end
 
+                % add for each +/- offset
+if 0
+                c_no = candidates;
+                for offset = 1 : 2
+                    for c_i = 1 : c_no
+                        cand_mv_x(candidates) = cand_mv_x(c_i) + offset;
+                        cand_mv_y(candidates) = cand_mv_y(c_i) + offset;
+                        candidates = candidates + 1;
+                        cand_mv_x(candidates) = cand_mv_x(c_i) + offset;
+                        cand_mv_y(candidates) = cand_mv_y(c_i) - offset;
+                        candidates = candidates + 1;
+                        cand_mv_x(candidates) = cand_mv_x(c_i) - offset;
+                        cand_mv_y(candidates) = cand_mv_y(c_i) + offset;
+                        candidates = candidates + 1;
+                        cand_mv_x(candidates) = cand_mv_x(c_i) - offset;
+                        cand_mv_y(candidates) = cand_mv_y(c_i) - offset;
+                        candidates = candidates + 1;
+                    end
+                end
+end
+
                 % test new candidates
                 for cand = 1 : candidates - 1
                     cost = cost_mad(frame, frame_prev, cand_mv_x(cand), cand_mv_y(cand), mb_x, mb_y, mb_size);
