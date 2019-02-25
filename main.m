@@ -30,7 +30,7 @@ end
 if 1
     mvs_filename = "mvs.txt";
     ffmpeg_export_mvs(input_file, mvs_filename);
-    [mvs_x, mvs_y, mvs_type, frames_type] = extract_mvs(mvs_filename, block_size_w, block_size_h);
+    [mvs_x, mvs_y, mvs_type, frames_type] = extract_mvs(mvs_filename, block_size_w, block_size_h, 0);
 end
 
 no_of_frames = size(frames_type, 2);
