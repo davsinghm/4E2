@@ -61,6 +61,7 @@ function [mvs_out_x, mvs_out_y] = fast_motion(frame, frame_prev, mvs_x, mvs_y, m
                         continue;
                     end
                     block_curr = frame(block_ys, block_xs);
+                    [neighbors_x, neighbors_y] = get_neighbor_mvs(mb_x, mb_y, mvs_x, mvs_y);
                     min_cost = intmax('int64'); % initial
 
                     % test new candidates
@@ -74,7 +75,6 @@ function [mvs_out_x, mvs_out_y] = fast_motion(frame, frame_prev, mvs_x, mvs_y, m
                             continue;
                         end
 
-                        [neighbors_x, neighbors_y] = get_neighbor_mvs(mb_x, mb_y, mvs_x, mvs_y);
                         cost = mean2(abs(block_curr - frame_prev(block_ys + mv_y, block_xs + mv_x))) ...
                                 + smoothness_cost_mv(mv_x, mv_y, neighbors_x, neighbors_y);
                         if cost < min_cost
