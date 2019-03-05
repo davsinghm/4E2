@@ -78,26 +78,26 @@ end
 
 % calc mad for current func
 function cost = cost_mad(frame, frame_prev, mv_x, mv_y, mb_x, mb_y, mb_size)
-    chans = size(frame, 3);
-    % start with nan, so that if loop doesn't run completely, the resulting
-    % mean is nan
-    mb_diff = nan(mb_size(1), mb_size(2), chans);
-    start_x = mb_x * mb_size(2);
-    start_y = mb_y * mb_size(1);
-    for chan = 1 : chans
-        for x1 = 1 : mb_size(2)
-            for y1 = 1 : mb_size(1)
-                curr_x = clip(floor(start_x + x1), 1, size(frame, 2));
-                curr_y = clip(floor(start_y + y1), 1, size(frame, 1));
-                prev_x = clip(floor(start_x + x1 + mv_x), 1, size(frame_prev, 2));
-                prev_y = clip(floor(start_y + y1 + mv_y), 1, size(frame_prev, 1));
-                mb_diff(y1, x1, chan) = double(frame(curr_y, curr_x, chan)) - double(frame_prev(prev_y, prev_x, chan));
-            end
-        end
-    end
-    cost = mean2(abs(mb_diff));
-end
 
-function ret = clip(val, a, b)
-    ret = max(a, min(val, b));
+    frame_max_w = size(frame, 2);
+    frame_max_h = size(frame, 1);
+
+    start_x = (mb_x - 1) * mb_size(2) + 1;
+    start_y = (mb_y - 1) * mb_size(1) + 1;
+    end_x = start_x + mb_size(2) - 1;
+    end_y = start_y + mb_size(1) - 1;
+    block_xs = start_x : end_x;
+    block_ys = start_y : end_y;
+
+    % if out of bounds return intmax('int64')
+    if end_x + mv_x > frame_max_w || start_x + mv_x < 1 ...
+        || end_y + mv_y > frame_max_h || start_y + mv_y < 1 ...
+        || end_x > frame_max_w || start_x < 1 ...
+        || end_y > frame_max_h || start_y < 1
+        cost = intmax('int64');
+        return;
+    end
+
+    block_curr = frame(block_ys, block_xs);
+    cost = mean2(abs(block_curr - frame_prev(block_ys + mv_y, block_xs + mv_x)));
 end
