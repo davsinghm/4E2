@@ -44,7 +44,7 @@ video_reader = VideoReader(input_file);
 
 frame_no = 1;
 while hasFrame(video_reader)
-    frame = readFrame(video_reader);
+    frame = rgb2gray(readFrame(video_reader));
 
     frame_mvs_x = mvs_x(:, :, frame_no);
     frame_mvs_y = mvs_y(:, :, frame_no);
@@ -190,7 +190,7 @@ function mc_frame = generate_mc_frame(frame, u, v)
     offset_x = x + u;
     offset_y = y + v;
     mc_frame = double(frame);
-    for chan = 1 : 3
+    for chan = 1 : size(frame, 3)
         mc_frame(:, :, chan) = interp2(x, y, double(frame(:, :, chan)), offset_x, offset_y);
     end
 
