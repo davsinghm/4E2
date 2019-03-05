@@ -12,7 +12,9 @@ function [mvs_out_x, mvs_out_y] = fast_motion(frame, frame_prev, mvs_x, mvs_y, m
             for mb_x = 2 + jump : 3 : mbs_width - 1
                 for mb_y = 2 + jump : 3 : mbs_height - 1
                     % start with current motion vector
-                    min_cost = cost_mad(frame, frame_prev, mvs_x(mb_y, mb_x), mvs_y(mb_y, mb_x), mb_x, mb_y, mb_size);
+                    [neighbors_x, neighbors_y] = get_neighbor_mvs(mb_x, mb_y, mvs_x, mvs_y);
+                    min_cost = cost_mad(frame, frame_prev, mvs_x(mb_y, mb_x), mvs_y(mb_y, mb_x), mb_x, mb_y, mb_size) ...
+                                + smoothness_cost_mv(mvs_x(mb_y, mb_x), mvs_y(mb_y, mb_x), neighbors_x, neighbors_y);
 
                     % prepare candidate mvs
                     candidates = 1;
@@ -51,7 +53,9 @@ function [mvs_out_x, mvs_out_y] = fast_motion(frame, frame_prev, mvs_x, mvs_y, m
 
                     % test new candidates
                     for cand = 1 : candidates - 1
-                        cost = cost_mad(frame, frame_prev, cand_mv_x(cand), cand_mv_y(cand), mb_x, mb_y, mb_size);
+                        [neighbors_x, neighbors_y] = get_neighbor_mvs(mb_x, mb_y, mvs_x, mvs_y);
+                        cost = cost_mad(frame, frame_prev, cand_mv_x(cand), cand_mv_y(cand), mb_x, mb_y, mb_size) ...
+                                + smoothness_cost_mv(cand_mv_x(cand), cand_mv_y(cand), neighbors_x, neighbors_y);
                         if cost < min_cost
                             if write_stats
                                 fprintf(stats_file, 'mb: (%d, %d), min_cost: %d, new_cost: %d, mv: (%d, %d), new_mv: (%d, %d)\n', mb_x, mb_y, min_cost, cost, mvs_x(mb_y, mb_x), mvs_y(mb_y, mb_x), cand_mv_x(cand), cand_mv_y(cand));
