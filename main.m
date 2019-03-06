@@ -42,7 +42,7 @@ frames_non_mc_mad = NaN(1, no_of_frames);
 frames_smoothness_cost = NaN(1, no_of_frames);
 
 % open the video
-video_reader = VideoReader(input_file);
+video_reader = VideoReader(orig_input_file);
 
 frame_no = 1;
 while hasFrame(video_reader)
