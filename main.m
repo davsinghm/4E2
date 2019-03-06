@@ -51,10 +51,6 @@ while hasFrame(video_reader)
     frame_mvs_x = mvs_x(:, :, frame_no);
     frame_mvs_y = mvs_y(:, :, frame_no);
 
-    if 0
-        visualize_mvs(frame, 1, frame_mvs_x, frame_mvs_y, block_size_w, block_size_h);
-    end
-
     % ignore other frames for now
     if frame_no > 1 && frames_type(frame_no) == 'p'
 
@@ -63,6 +59,9 @@ while hasFrame(video_reader)
         % fast motion: refine motion vectors
         [frame_mvs_x, frame_mvs_y] = fast_motion(frame, frame_prev, frame_mvs_x, frame_mvs_y, mb_size, frame_no);
         [u, v] = fill_dense_mvs_from_blocks([height, width], frame_mvs_x, frame_mvs_y, block_size_w, block_size_h);
+        if 1
+            visualize_mvs(frame, 1, u, v, 16, 16); % visualize every 16th mv
+        end
         mc_previous = generate_mc_frame(frame_prev, u, v);
 
         mc_mad = mean2(abs(double(frame) - double(mc_previous)));
@@ -154,29 +153,21 @@ function [u, v] = fill_dense_mvs_from_blocks(frame_size, mvs_x, mvs_y, block_siz
 end
 
 % show vectors using quiver
-function visualize_mvs(frame, figure_no, mvs_x, mvs_y, block_size_w, block_size_h)
+function visualize_mvs(frame, figure_no, u, v, step_w, step_h)
     figure(figure_no);
     [height, width, ~] = size(frame);
-    image((1 : width), (1 : height), frame);
+    imshow(frame); axis on;
     title(['Frame ', num2str(figure_no)]);
 
     x = ones(height, 1) * (1 : width);
     y = (1 : height)' * ones(1, width);
-    x_pos = x(floor(block_size_w / 2) : block_size_w : end, ...
-              floor(block_size_h / 2) : block_size_h : end);
-    y_pos = y(floor(block_size_w / 2) : block_size_w : end, ...
-              floor(block_size_h / 2) : block_size_h : end);
-    u = NaN(size(x_pos));
-    v = NaN(size(y_pos));
-    for i = 1 : min(size(u, 1), size(mvs_x, 1))
-        for j = 1 : min(size(v, 2), size(mvs_y, 2))
-            u(i, j) = mvs_x(i, j);
-            v(i, j) = mvs_y(i, j);
-        end
-    end
+    X = x(floor(step_w / 2) : step_w : end, floor(step_h / 2) : step_h : end);
+    Y = y(floor(step_w / 2) : step_w : end, floor(step_h / 2) : step_h : end);
+    U = u(Y(: , 1), X(1, :));
+    V = v(Y(: , 1), X(1, :));
 
     hold on;
-    quiver(x_pos, y_pos, u, v, 0, 'r-', 'linewidth', 1); shg;
+    quiver(X, Y, U, V, 0, 'g-', 'linewidth', 1); shg;
     hold off;
 end
 
