@@ -1,3 +1,5 @@
+addpath 'utils';
+
 close all;
 clear;
 
