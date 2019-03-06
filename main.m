@@ -17,12 +17,11 @@ avg_frames_mc_mad = NaN(1, 51);
 avg_frames_non_mc_mad = NaN(1, 51);
 for crf = 17 : 17
 
-% temporary file from which the mvs are extracted. the file is encoded from original source by x264, saving mvs to it.
-temp_mvs_vid = "temp_mvs.mp4";
+orig_input_file = "test_orig.mp4";
+temp_mvs_vid = "temp_mvs.mp4"; % temporary file from which the mvs are extracted. the file is encoded from original source by x264, saving mvs to it.
 
 % encode orignal file to intermediary file with specific settings (gop size etc)
 if 1
-    orig_input_file = "test_orig.mp4";
     sub_me = 1; % subme: 7: rd (default), 0: full pel only, 1: qpel sad 1 iter, 2: qpel sad 1 iter
     bframes_no = 0;
     ref_frames = 0;
