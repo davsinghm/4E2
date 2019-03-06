@@ -44,6 +44,7 @@ frames_smoothness_cost = NaN(1, no_of_frames);
 % open the video
 video_reader = VideoReader(orig_input_file);
 
+tic;
 frame_no = 1;
 while hasFrame(video_reader)
     frame = rgb2gray(readFrame(video_reader));
@@ -93,6 +94,7 @@ while hasFrame(video_reader)
     frame_prev = frame;
     frame_no = frame_no + 1;
 end
+toc;
 
 % show mad graphs
 figure(1);
