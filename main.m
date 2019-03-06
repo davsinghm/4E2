@@ -3,8 +3,6 @@ addpath 'utils';
 close all;
 clear;
 
-input_file = "test.mp4";
-
 % block size
 block_size_w = 4;
 block_size_h = 4;
@@ -19,19 +17,22 @@ avg_frames_mc_mad = NaN(1, 51);
 avg_frames_non_mc_mad = NaN(1, 51);
 for crf = 17 : 17
 
-% encode orignal file to input_file with specific settings (gop size etc)
+% temporary file from which the mvs are extracted. the file is encoded from original source by x264, saving mvs to it.
+temp_mvs_vid = "temp_mvs.mp4";
+
+% encode orignal file to intermediary file with specific settings (gop size etc)
 if 1
     orig_input_file = "test_orig.mp4";
     sub_me = 1; % subme: 7: rd (default), 0: full pel only, 1: qpel sad 1 iter, 2: qpel sad 1 iter
     bframes_no = 0;
     ref_frames = 0;
     key_int = 2; % max interval b/w IDR-frames (aka keyframes)
-    x264_execute(orig_input_file, input_file, crf, bframes_no, ref_frames, key_int);
+    x264_execute(orig_input_file, temp_mvs_vid, crf, bframes_no, ref_frames, key_int);
 end
 
 if 1
     mvs_filename = "mvs.txt";
-    ffmpeg_export_mvs(input_file, mvs_filename);
+    ffmpeg_export_mvs(temp_mvs_vid, mvs_filename);
     [mvs_x, mvs_y, mvs_type, frames_type] = extract_mvs(mvs_filename, block_size_w, block_size_h, 0);
 end
 
@@ -119,9 +120,9 @@ plot(avg_frames_x, avg_frames_non_mc_mad);
 hold off;
 % need to generate error based on original frames
 
-% export mvs from @input_file and save to @mvs_filename
-function ffmpeg_export_mvs(input_file, mvs_filename)
-    ret = system(sprintf("./FFmpeg/ffmpeg -y -flags2 +export_mvs -i %1$s -vf codecview=mv_type=fp+bp -c:v libx264 -preset ultrafast -crf 0 codecview_%1$s > %2$s", input_file, mvs_filename));
+% export mvs from @source and save to @mvs_filename
+function ffmpeg_export_mvs(video, mvs_filename)
+    ret = system(sprintf("./FFmpeg/ffmpeg -y -flags2 +export_mvs -i %1$s -vf codecview=mv_type=fp+bp -c:v libx264 -preset ultrafast -crf 0 %1$s_codecview.mp4 > %2$s", video, mvs_filename));
     if ret ~= 0
         error("ffmpeg exit code is: %d", ret);
     end
