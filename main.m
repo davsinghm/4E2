@@ -124,9 +124,11 @@ plot(avg_frames_x, avg_frames_non_mc_mad);
 hold off;
 % need to generate error based on original frames
 
-% export mvs from @source and save to @mvs_filename
-function ffmpeg_export_mvs(video, mvs_filename)
-    ret = system(sprintf("./FFmpeg/ffmpeg -y -flags2 +export_mvs -i %1$s -vf codecview=mv_type=fp+bp -c:v libx264 -preset ultrafast -crf 0 %1$s_codecview.mp4 > %2$s", video, mvs_filename));
+% export mvs from video and save to mvs_file
+function ffmpeg_export_mvs(video_file, temp_mvs_file)
+    codecview_file = strsplit(video_file, '.');
+    codecview_file = codecview_file(1);
+    ret = system(sprintf("./FFmpeg/ffmpeg -y -flags2 +export_mvs -i %1$s -vf codecview=mv_type=fp+bp -c:v libx264 -preset ultrafast -crf 0 %2$s_codecview.mp4 > %3$s", video_file, codecview_file, temp_mvs_file));
     if ret ~= 0
         error("ffmpeg exit code is: %d", ret);
     end
