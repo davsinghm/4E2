@@ -18,7 +18,7 @@ avg_frames_non_mc_mad = NaN(1, 51);
 for crf = 17 : 17
 
 orig_input_file = "test_orig.mp4";
-temp_mvs_vid = "temp_mvs.mp4"; % temporary file from which the mvs are extracted. the file is encoded from original source by x264, saving mvs to it.
+temp_mvs_vid_file = "tmp/mvs.mp4"; % temporary file from which the mvs are extracted. the file is encoded from original source by x264, saving mvs to it.
 
 % encode orignal file to intermediary file with specific settings (gop size etc)
 if 1
@@ -26,13 +26,13 @@ if 1
     bframes_no = 0;
     ref_frames = 0;
     key_int = 2; % max interval b/w IDR-frames (aka keyframes)
-    x264_execute(orig_input_file, temp_mvs_vid, crf, bframes_no, ref_frames, key_int);
+    x264_execute(orig_input_file, temp_mvs_vid_file, crf, bframes_no, ref_frames, key_int);
 end
 
 if 1
-    mvs_filename = "mvs.txt";
-    ffmpeg_export_mvs(temp_mvs_vid, mvs_filename);
-    [mvs_x, mvs_y, mvs_type, frames_type] = extract_mvs(mvs_filename, block_size_w, block_size_h);
+    temp_mvs_file = "tmp/mvs.txt";
+    ffmpeg_export_mvs(temp_mvs_vid_file, temp_mvs_file);
+    [mvs_x, mvs_y, mvs_type, frames_type] = extract_mvs(temp_mvs_file, block_size_w, block_size_h);
 
     if 1 % disable subpel
         mvs_x = round(mvs_x);
