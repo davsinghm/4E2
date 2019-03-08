@@ -32,7 +32,12 @@ end
 if 1
     mvs_filename = "mvs.txt";
     ffmpeg_export_mvs(temp_mvs_vid, mvs_filename);
-    [mvs_x, mvs_y, mvs_type, frames_type] = extract_mvs(mvs_filename, block_size_w, block_size_h, 0);
+    [mvs_x, mvs_y, mvs_type, frames_type] = extract_mvs(mvs_filename, block_size_w, block_size_h);
+
+    if 1 % disable subpel
+        mvs_x = round(mvs_x);
+        mvs_y = round(mvs_y);
+    end
 end
 
 no_of_frames = size(frames_type, 2);
