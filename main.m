@@ -64,11 +64,11 @@ while hasFrame(video_reader)
         [height, width, chans] = size(frame);
         % fast motion: refine motion vectors
         [frame_mvs_x, frame_mvs_y] = fast_motion(frame, frame_prev, frame_mvs_x, frame_mvs_y, mb_size, frame_no);
-        [u, v] = fill_dense_mvs_from_blocks([height, width], frame_mvs_x, frame_mvs_y, block_size_w, block_size_h);
+        frame_flo = fill_dense_mvs_from_blocks([height, width], frame_mvs_x, frame_mvs_y, block_size_w, block_size_h);
         if 1
-            visualize_mvs(frame, 1, u, v, 16, 16); % visualize every 16th mv
+            visualize_mvs(frame, 1, frame_flo, 16, 16); % visualize every 16th mv
         end
-        mc_previous = generate_mc_frame(frame_prev, u, v);
+        mc_previous = generate_mc_frame(frame_prev, frame_flo);
 
         mc_mad = mean2(abs(double(frame) - double(mc_previous)));
         non_mc_mad = mean2(abs(double(frame) - double(frame_prev)));
@@ -135,9 +135,8 @@ function ffmpeg_export_mvs(video_file, temp_mvs_file)
 end
 
 % fill @u and @v matrices which are equal to @frame_size from @mvs_x, @mvs_y which are block level
-function [u, v] = fill_dense_mvs_from_blocks(frame_size, mvs_x, mvs_y, block_size_w, block_size_h)
-    u = NaN(frame_size);
-    v = NaN(frame_size);
+function flo = fill_dense_mvs_from_blocks(frame_size, mvs_x, mvs_y, block_size_w, block_size_h)
+    flo = NaN(frame_size(1), frame_size(2), 2);
     for i = 1 : size(mvs_y, 1)
         for j = 1 : size(mvs_x, 2)
             for mb_i = 1 : block_size_h
@@ -146,14 +145,12 @@ function [u, v] = fill_dense_mvs_from_blocks(frame_size, mvs_x, mvs_y, block_siz
                     % than x, y
                     if mb_i + (i - 1) * block_size_h <= frame_size(1) ...
                             && mb_j + (j - 1) * block_size_w <= frame_size(2)
-                        u(mb_i + (i - 1) * block_size_h, ...
-                          mb_j + (j - 1) * block_size_w ...
-                         ) ...
-                           = mvs_x(i, j);
-                        v(mb_i + (i - 1) * block_size_h, ...
-                          mb_j + (j - 1) * block_size_w ...
-                         ) ...
-                           = mvs_y(i, j);
+                        flo(mb_i + (i - 1) * block_size_h, ...
+                            mb_j + (j - 1) * block_size_w, ...
+                            1 ) = mvs_x(i, j);
+                        flo(mb_i + (i - 1) * block_size_h, ...
+                            mb_j + (j - 1) * block_size_w, ...
+                            2 ) = mvs_y(i, j);
                     end
                 end
             end
@@ -162,7 +159,7 @@ function [u, v] = fill_dense_mvs_from_blocks(frame_size, mvs_x, mvs_y, block_siz
 end
 
 % show vectors using quiver
-function visualize_mvs(frame, figure_no, u, v, step_w, step_h)
+function visualize_mvs(frame, figure_no, mvs, step_w, step_h)
     figure(figure_no);
     [height, width, ~] = size(frame);
     imshow(frame); axis on;
@@ -172,25 +169,24 @@ function visualize_mvs(frame, figure_no, u, v, step_w, step_h)
     y = (1 : height)' * ones(1, width);
     X = x(floor(step_w / 2) : step_w : end, floor(step_h / 2) : step_h : end);
     Y = y(floor(step_w / 2) : step_w : end, floor(step_h / 2) : step_h : end);
-    U = u(Y(: , 1), X(1, :));
-    V = v(Y(: , 1), X(1, :));
+    U = mvs(Y(: , 1), X(1, :), 1);
+    V = mvs(Y(: , 1), X(1, :), 2);
 
     hold on;
     quiver(X, Y, U, V, 0, 'g-', 'linewidth', 1); shg;
     hold off;
 end
 
-% interpolate mc frame. replaces zeros where mvs - u, v are NaN
-function mc_frame = generate_mc_frame(frame, u, v)
+% interpolate mc frame. replaces zeros where mvs are NaN
+function mc_frame = generate_mc_frame(frame, flo)
     x = ones(size(frame, 1), 1) * (1 : size(frame, 2));
     y = (1 : size(frame, 1))' * ones(1, size(frame, 2));
 
     % relace NaN values with zero in mc frame
-    u(isnan(u)) = 0;
-    v(isnan(v)) = 0;
+    flo(isnan(flo)) = 0;
 
-    offset_x = x + u;
-    offset_y = y + v;
+    offset_x = x + flo(:, :, 1);
+    offset_y = y + flo(:, :, 2);
     mc_frame = double(frame);
     for chan = 1 : size(frame, 3)
         mc_frame(:, :, chan) = interp2(x, y, double(frame(:, :, chan)), offset_x, offset_y);
