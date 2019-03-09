@@ -48,7 +48,6 @@ frames_mc_mad = NaN(1, no_of_frames);
 frames_non_mc_mad = NaN(1, no_of_frames);
 frames_smoothness_cost = NaN(1, no_of_frames);
 
-tic;
 for frame_no = 1 : no_of_frames
     frame = rgb2gray(imread(sprintf(orig_input_file_fmt, frame_no)));
 
@@ -109,7 +108,6 @@ for frame_no = 1 : no_of_frames
     frame_prev = frame;
     frame_no = frame_no + 1;
 end
-toc;
 
 % show mad graphs
 figure(1);
