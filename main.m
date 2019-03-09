@@ -119,8 +119,10 @@ hold on;
 i_y = ~isnan(frames_mc_mad) & ~isnan(frames_non_mc_mad);
 frames_x = 1 : size(i_y(i_y), 2);
 plot(frames_x, frames_mc_mad(i_y));
-plot(frames_x, frames_non_mc_mad(i_y));
 plot(frames_x, frames_smoothness_cost(i_y));
+plot(frames_x, frames_non_mc_mad(i_y));
+legend({'MC MAD', 'Smoothness Cost'});
+xlabel('Frame'); ylabel('Cost');
 hold off;
 
 avg_frames_mc_mad(crf) = mean(frames_mc_mad(i_y));
@@ -129,9 +131,9 @@ avg_frames_non_mc_mad(crf) = mean(frames_non_mc_mad(i_y));
 end
 
 figure(2);
+hold on;
 avg_frames_x = 1 : size(avg_frames_mc_mad, 2);
 plot(avg_frames_x, avg_frames_mc_mad);
-hold on;
 plot(avg_frames_x, avg_frames_non_mc_mad);
 hold off;
 % need to generate error based on original frames
