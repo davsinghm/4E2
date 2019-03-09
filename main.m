@@ -62,10 +62,16 @@ while hasFrame(video_reader)
 
         % fill u and v with same mv from block
         [height, width, chans] = size(frame);
-        % fast motion: refine motion vectors
-        [frame_mvs_x, frame_mvs_y] = fast_motion(frame, frame_prev, frame_mvs_x, frame_mvs_y, mb_size, frame_no);
-        frame_flo = fill_dense_mvs_from_blocks([height, width], frame_mvs_x, frame_mvs_y, block_size_w, block_size_h);
-        if 1
+        if 0 % ffmpeg mvs
+            if 0 % fast motion: refine motion vectors
+                [frame_mvs_x, frame_mvs_y] = fast_motion(frame, frame_prev, frame_mvs_x, frame_mvs_y, mb_size, frame_no);
+            end
+            frame_flo = fill_dense_mvs_from_blocks([height, width], frame_mvs_x, frame_mvs_y, block_size_w, block_size_h);
+        else % groundtruth
+            frame_flo = -readFlowFile(sprintf('tmp/alley_1/frame_%04d.flo', frame_no -1)); % flow files have negative mvs footnote [1]
+        end
+
+        if 0 % visualize mvs
             visualize_mvs(frame, 1, frame_flo, 16, 16); % visualize every 16th mv
         end
 
@@ -202,3 +208,10 @@ function mc_frame = generate_mc_frame(frame, flo)
     % update: quick looks, seems like there are on edges when mvs are outside the frame
     mc_frame(isnan(mc_frame)) = 0;
 end
+
+% note [1]:
+% based on experiments and observations:
+% mvs in sintel's groundtruth flow files are negated and frame_%04d.flo offset is -1.
+% this means for frame 2, the flow file is frame_0001.flo.
+% this is best config, tested over each sequence, which gives minimum average
+% motion compensated frame difference over whole sequence.
