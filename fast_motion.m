@@ -68,14 +68,16 @@ function [mvs_out_x, mvs_out_y] = fast_motion(frame, frame_prev, mvs_x, mvs_y, m
                     for cand = 1 : candidates - 1
                         mv_x = cand_mv_x(cand);
                         mv_y = cand_mv_y(cand);
+                        block_prev_xs = round(block_xs + mv_x);
+                        block_prev_ys = round(block_ys + mv_y);
 
                         % skip if out of bounds
-                        if end_x + mv_x > frame_width || start_x + mv_x < 1 || end_y + mv_y > frame_height || start_y + mv_y < 1 ...
-                            || end_x > frame_width || start_x < 1 || end_y > frame_height || start_y < 1
+                        if  block_prev_xs(mb_size(1)) > frame_width  || block_prev_xs(1) < 1 || ...
+                            block_prev_ys(mb_size(2)) > frame_height || block_prev_ys(1) < 1
                             continue;
                         end
 
-                        cost = mean2(abs(block_curr - frame_prev(block_ys + mv_y, block_xs + mv_x))) ...
+                        cost = mean2(abs(block_curr - frame_prev(block_prev_ys, block_prev_xs))) ...
                                 + smoothness_cost_mv(mv_x, mv_y, neighbors_x, neighbors_y);
                         if cost < min_cost
                             if write_stats
