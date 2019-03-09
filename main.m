@@ -17,19 +17,21 @@ avg_frames_mc_mad = NaN(1, 51);
 avg_frames_non_mc_mad = NaN(1, 51);
 for crf = 17 : 17
 
-orig_input_file = "test_orig.mp4";
-temp_mvs_vid_file = "tmp/mvs.mp4"; % temporary file from which the mvs are extracted. the file is encoded from original source by x264, saving mvs to it.
+orig_input_file_fmt = './alley_1/frame_%04d.png';
+flo_dir = 'tmp/alley_1/frame_%04d.flo'; % if loading external mvs
 
-% encode orignal file to intermediary file with specific settings (gop size etc)
+% generate and read ffmpeg mvs
 if 1
+    temp_mvs_vid_file = "tmp/mvs.mp4"; % temporary file from which the mvs are extracted. the file is encoded from original source by x264, saving mvs to it.
+
+    % encode orignal file to intermediary file with specific settings (gop size etc)
     sub_me = 1; % subme: 7: rd (default), 0: full pel only, 1: qpel sad 1 iter, 2: qpel sad 1 iter
     bframes_no = 0;
     ref_frames = 0;
     key_int = 2; % max interval b/w IDR-frames (aka keyframes)
-    x264_execute(orig_input_file, temp_mvs_vid_file, crf, bframes_no, ref_frames, key_int);
-end
+    x264_execute(orig_input_file_fmt, temp_mvs_vid_file, crf, bframes_no, ref_frames, key_int);
 
-if 1
+    % read mvs from file
     temp_mvs_file = "tmp/mvs.txt";
     ffmpeg_export_mvs(temp_mvs_vid_file, temp_mvs_file);
     [mvs_x, mvs_y, mvs_type, frames_type] = extract_mvs(temp_mvs_file, block_size_w, block_size_h);
@@ -46,13 +48,9 @@ frames_mc_mad = NaN(1, no_of_frames);
 frames_non_mc_mad = NaN(1, no_of_frames);
 frames_smoothness_cost = NaN(1, no_of_frames);
 
-% open the video
-video_reader = VideoReader(orig_input_file);
-
 tic;
-frame_no = 1;
-while hasFrame(video_reader)
-    frame = rgb2gray(readFrame(video_reader));
+for frame_no = 1 : no_of_frames
+    frame = rgb2gray(imread(sprintf(orig_input_file_fmt, frame_no)));
 
     frame_mvs_x = mvs_x(:, :, frame_no);
     frame_mvs_y = mvs_y(:, :, frame_no);
@@ -68,7 +66,7 @@ while hasFrame(video_reader)
             end
             frame_flo = fill_dense_mvs_from_blocks([height, width], frame_mvs_x, frame_mvs_y, block_size_w, block_size_h);
         else % groundtruth
-            frame_flo = -readFlowFile(sprintf('tmp/alley_1/frame_%04d.flo', frame_no -1)); % flow files have negative mvs footnote [1]
+            frame_flo = -readFlowFile(sprintf(flo_dir, frame_no - 1)); % flow files have negative mvs footnote [1]
         end
 
         if 0 % visualize mvs
