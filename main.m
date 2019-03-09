@@ -1,4 +1,4 @@
-addpath 'utils';
+addpath 'utils' 'utils/flow_code';
 
 close all;
 clear;
@@ -68,6 +68,12 @@ while hasFrame(video_reader)
         if 1
             visualize_mvs(frame, 1, frame_flo, 16, 16); % visualize every 16th mv
         end
+
+        if 0 %save flow color image
+            vis_flow_color = flowToColor(frame_flo);
+            imwrite(vis_flow_color, sprintf('tmp/frame_%04d.png', frame_no));
+        end
+
         mc_previous = generate_mc_frame(frame_prev, frame_flo);
 
         mc_mad = mean2(abs(double(frame) - double(mc_previous)));
