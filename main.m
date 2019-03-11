@@ -15,7 +15,7 @@ end
 
 avg_frames_mc_mad = NaN(1, 51);
 avg_frames_non_mc_mad = NaN(1, 51);
-for crf = 17 : 17
+if 1
 
 orig_input_file_fmt = './alley_1/frame_%04d.png';
 flo_dir = 'tmp/alley_1/frame_%04d.flo'; % if loading external mvs
@@ -29,6 +29,7 @@ if 1
     bframes_no = 0;
     ref_frames = 0;
     key_int = 2; % max interval b/w IDR-frames (aka keyframes)
+    crf = 17
     x264_execute(orig_input_file_fmt, temp_mvs_vid_file, crf, bframes_no, ref_frames, key_int);
 
     % read mvs from file
