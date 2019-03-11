@@ -13,21 +13,22 @@ if system("cd FFmpeg && make") ~= 0
     error("make error");
 end
 
-avg_frames_mc_mad = NaN(1, 51);
-avg_frames_non_mc_mad = NaN(1, 51);
+avg_seqs_mc_mad = NaN(1, 3);
 seqs = get_sintel_sequences();
 
+for me = 1 : 3 % 1 for gt, 2 for fm, 3 for other
 for seq_i = 1 : size(seqs, 1)
 
     seq_name = seqs(seq_i, 1);
     frames_dir = seqs(seq_i, 2);
     flo_dir = seqs(seq_i, 3);
+    %no_of_frames = str2num(seqs(seq_i, 4)); do this when not restricted to p
 
     orig_input_file_fmt = sprintf('%s/frame_%%04d.png', frames_dir);
     flo_file_fmt = sprintf('%s/frame_%%04d.flo', flo_dir); % if loading external mvs
 
     % generate and read ffmpeg mvs
-    if 1
+    if me == 2 || 1 % always do this for now to check frame_type (or no_of_frames)
         temp_mvs_vid_file = "tmp/mvs.mp4"; % temporary file from which the mvs are extracted. the file is encoded from original source by x264, saving mvs to it.
 
         % encode orignal file to intermediary file with specific settings (gop size etc)
@@ -47,8 +48,8 @@ for seq_i = 1 : size(seqs, 1)
     no_of_frames = size(frames_type, 2);
     % frame data, mad
     frames_mc_mad = NaN(1, no_of_frames);
-    frames_non_mc_mad = NaN(1, no_of_frames);
-    frames_smoothness_cost = NaN(1, no_of_frames);
+    %frames_non_mc_mad = NaN(1, no_of_frames);
+    %frames_smoothness_cost = NaN(1, no_of_frames);
 
     for frame_no = 1 : no_of_frames
         frame = rgb2gray(imread(sprintf(orig_input_file_fmt, frame_no)));
@@ -58,15 +59,16 @@ for seq_i = 1 : size(seqs, 1)
 
             % fill u and v with same mv from block
             [height, width, chans] = size(frame);
-            if 1 % ffmpeg mvs
-                frame_mvs_x = mvs_x(:, :, frame_no);
-                frame_mvs_y = mvs_y(:, :, frame_no);
-                if 0 % fast motion: refine motion vectors
-                    [frame_mvs_x, frame_mvs_y] = fast_motion(frame, frame_prev, frame_mvs_x, frame_mvs_y, mb_size, frame_no);
-                end
-                frame_flo = fill_dense_mvs_from_blocks([height, width], frame_mvs_x, frame_mvs_y, block_size_w, block_size_h);
-            else % groundtruth
-                frame_flo = -readFlowFile(sprintf(flo_file_fmt, frame_no - 1)); % flow files have negative mvs footnote [1]
+            switch me
+                case 1 % use groundtruth
+                    frame_flo = -readFlowFile(sprintf(flo_file_fmt, frame_no - 1)); % flow files have negative mvs footnote [1]
+                case {2, 3} % ffmpeg mvs or fast motion
+                    frame_mvs_x = mvs_x(:, :, frame_no);
+                    frame_mvs_y = mvs_y(:, :, frame_no);
+                    if me == 3 % fast motion: refine motion vectors
+                        %[frame_mvs_x, frame_mvs_y] = fast_motion(frame, frame_prev, frame_mvs_x, frame_mvs_y, mb_size, frame_no);
+                    end
+                    frame_flo = fill_dense_mvs_from_blocks([height, width], frame_mvs_x, frame_mvs_y, block_size_w, block_size_h);
             end
 
             if 0 % visualize mvs
@@ -85,8 +87,8 @@ for seq_i = 1 : size(seqs, 1)
             smoothness_cost = smoothness_cost_frame(frame_flo(1), frame_flo(2));
 
             frames_mc_mad(frame_no) = mc_mad;
-            frames_non_mc_mad(frame_no) = non_mc_mad;
-            frames_smoothness_cost(frame_no) = smoothness_cost;
+            %frames_non_mc_mad(frame_no) = non_mc_mad;
+            %frames_smoothness_cost(frame_no) = smoothness_cost;
             fprintf("frame_no: %03d, mc_diff: %.16f, smoothness: %d\n", frame_no, mc_mad, smoothness_cost);
 
             % figure(2);
@@ -110,29 +112,33 @@ for seq_i = 1 : size(seqs, 1)
         frame_no = frame_no + 1;
     end
 
-    % show mad graphs
-    figure(1);
-    hold on;
-    i_y = ~isnan(frames_mc_mad) & ~isnan(frames_non_mc_mad);
-    frames_x = 1 : size(i_y(i_y), 2);
-    plot(frames_x, frames_mc_mad(i_y));
-    plot(frames_x, frames_smoothness_cost(i_y));
-    plot(frames_x, frames_non_mc_mad(i_y));
-    legend({'MC MAD', 'Smoothness Cost'});
-    xlabel('Frame'); ylabel('Cost');
-    hold off;
+    % % show mad graphs
+    % figure(1);
+    % hold on;
+    i_y = ~isnan(frames_mc_mad);% & ~isnan(frames_non_mc_mad);
+    % frames_x = 1 : size(i_y(i_y), 2);
+    % plot(frames_x, frames_mc_mad(i_y));
+    % plot(frames_x, frames_smoothness_cost(i_y));
+    % plot(frames_x, frames_non_mc_mad(i_y));
+    % legend({'MC MAD', 'Smoothness Cost'});
+    % xlabel('Frame'); ylabel('Cost');
+    % hold off;
 
-    fprintf("avg_mc_diff: %.16f\n", mean(frames_mc_mad(i_y)));
-    avg_frames_mc_mad(crf) = mean(frames_mc_mad(i_y));
-    avg_frames_non_mc_mad(crf) = mean(frames_non_mc_mad(i_y));
+    avg_seq_mc_mad = mean(frames_mc_mad(i_y));
+    fprintf("avg_mc_diff: %.16f\n", avg_seq_mc_mad);
+    avg_seqs_mc_mad(seq_i, me) = avg_seq_mc_mad;
 
+end
 end
 
 figure(2);
 hold on;
-avg_frames_x = 1 : size(avg_frames_mc_mad, 2);
-plot(avg_frames_x, avg_frames_mc_mad);
-plot(avg_frames_x, avg_frames_non_mc_mad);
+avg_frames_x = 1 : size(avg_seqs_mc_mad, 1);
+plot(avg_frames_x, avg_seqs_mc_mad(:, 1)); % 1 == gt
+plot(avg_frames_x, avg_seqs_mc_mad(:, 2)); % 2 == ffmpeg
+plot(avg_frames_x, avg_seqs_mc_mad(:, 3)); % 3 == fm
+legend({'Groundtruth', 'FFmpeg Raw MVs', 'FastMotion'});
+xlabel('Sequence'); ylabel('Average MC MAD');
 hold off;
 % need to generate error based on original frames
 
