@@ -115,6 +115,7 @@ legend({'MC MAD', 'Smoothness Cost'});
 xlabel('Frame'); ylabel('Cost');
 hold off;
 
+fprintf("avg_mc_diff: %.16f\n", mean(frames_mc_mad(i_y)));
 avg_frames_mc_mad(crf) = mean(frames_mc_mad(i_y));
 avg_frames_non_mc_mad(crf) = mean(frames_non_mc_mad(i_y));
 
