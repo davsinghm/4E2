@@ -62,6 +62,7 @@ for seq_i = 1 : size(seqs, 1)
             switch me
                 case 1 % use groundtruth
                     frame_flo = -readFlowFile(sprintf(flo_file_fmt, frame_no - 1)); % flow files have negative mvs footnote [1]
+                    frame_flo = flip_flo_fwd_to_bwd(-frame_flo); % test, arg: -ve, i.e. orig dir
                 case {2, 3} % ffmpeg mvs or fast motion
                     frame_mvs_x = mvs_x(:, :, frame_no);
                     frame_mvs_y = mvs_y(:, :, frame_no);
