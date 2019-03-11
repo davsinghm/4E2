@@ -17,8 +17,11 @@ avg_frames_mc_mad = NaN(1, 51);
 avg_frames_non_mc_mad = NaN(1, 51);
 if 1
 
-orig_input_file_fmt = './alley_1/frame_%04d.png';
-flo_dir = 'tmp/alley_1/frame_%04d.flo'; % if loading external mvs
+frames_dir = 'alley_1';
+flo_dir = 'tmp/alley_1';
+
+orig_input_file_fmt = sprintf('%s/frame_%%04d.png', frames_dir);
+flo_file_fmt = sprintf('%s/frame_%%04d.flo', flo_dir); % if loading external mvs
 
 % generate and read ffmpeg mvs
 if 1
@@ -60,7 +63,7 @@ for frame_no = 1 : no_of_frames
             end
             frame_flo = fill_dense_mvs_from_blocks([height, width], frame_mvs_x, frame_mvs_y, block_size_w, block_size_h);
         else % groundtruth
-            frame_flo = -readFlowFile(sprintf(flo_dir, frame_no - 1)); % flow files have negative mvs footnote [1]
+            frame_flo = -readFlowFile(sprintf(flo_file_fmt, frame_no - 1)); % flow files have negative mvs footnote [1]
         end
 
         if 0 % visualize mvs
