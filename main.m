@@ -46,16 +46,15 @@ frames_smoothness_cost = NaN(1, no_of_frames);
 for frame_no = 1 : no_of_frames
     frame = rgb2gray(imread(sprintf(orig_input_file_fmt, frame_no)));
 
-    frame_mvs_x = mvs_x(:, :, frame_no);
-    frame_mvs_y = mvs_y(:, :, frame_no);
-
     % ignore other frames for now
     if frame_no > 1 && frames_type(frame_no) == 'p'
 
         % fill u and v with same mv from block
         [height, width, chans] = size(frame);
-        if 0 % ffmpeg mvs
-            if 0 % fast motion: refine motion vectors
+        if 1 % ffmpeg mvs
+            frame_mvs_x = mvs_x(:, :, frame_no);
+            frame_mvs_y = mvs_y(:, :, frame_no);
+            if 1 % fast motion: refine motion vectors
                 [frame_mvs_x, frame_mvs_y] = fast_motion(frame, frame_prev, frame_mvs_x, frame_mvs_y, mb_size, frame_no);
             end
             frame_flo = fill_dense_mvs_from_blocks([height, width], frame_mvs_x, frame_mvs_y, block_size_w, block_size_h);
@@ -76,7 +75,7 @@ for frame_no = 1 : no_of_frames
 
         mc_mad = mean2(abs(double(frame) - double(mc_previous)));
         non_mc_mad = mean2(abs(double(frame) - double(frame_prev)));
-        smoothness_cost = smoothness_cost_frame(frame_mvs_x, frame_mvs_y);
+        smoothness_cost = smoothness_cost_frame(frame_flo(1), frame_flo(2));
 
         frames_mc_mad(frame_no) = mc_mad;
         frames_non_mc_mad(frame_no) = non_mc_mad;
