@@ -70,7 +70,7 @@ for seq_i = 1 : size(seqs, 1)
             end
 
             if 0 % visualize mvs
-                visualize_mvs(frame, 1, frame_flo, 16, 16); % visualize every 16th mv
+                visualize_mvs(frame, seq_name, 1, frame_flo, 16, 16); % visualize every 16th mv
             end
 
             if 0 %save flow color image
@@ -171,11 +171,11 @@ function flo = fill_dense_mvs_from_blocks(frame_size, mvs_x, mvs_y, block_size_w
 end
 
 % show vectors using quiver
-function visualize_mvs(frame, figure_no, mvs, step_w, step_h)
+function visualize_mvs(frame, seq_name, figure_no, mvs, step_w, step_h)
     figure(figure_no);
     [height, width, ~] = size(frame);
     imshow(frame); axis on;
-    title(['Frame ', num2str(figure_no)]);
+    title([seq_name, ', F: ', num2str(figure_no)]);
 
     x = ones(height, 1) * (1 : width);
     y = (1 : height)' * ones(1, width);
