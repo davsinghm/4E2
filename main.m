@@ -83,19 +83,19 @@ for frame_no = 1 : no_of_frames
         fprintf("frame_no: %03d, mc_diff: %.16f, smoothness: %d\n", frame_no, mc_mad, smoothness_cost);
 
         % figure(2);
-        % image(frame_prev);
+        % imshow(frame_prev);
         % title('The previous frame');
         %
         % figure(3);
-        % image(uint8(mc_previous));
+        % imshow(uint8(mc_previous));
         % title('The motion compensated previous frame');
         %
         % figure(4);
-        % image(uint8(128 + double(frame_prev) - double(frame)));
+        % imshow(uint8(128 + double(frame_prev) - double(frame)));
         % title('The (non-mc) frame difference');
         %
         % figure(5);
-        % image(uint8(128 + double(frame_prev) - double(mc_previous)));
+        % imshow(uint8(128 + double(frame_prev) - double(mc_previous)));
         % title('The MC frame difference');
     end
 
