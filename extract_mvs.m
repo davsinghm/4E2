@@ -20,7 +20,7 @@
 % found. block size is defined by @block_size_w and @block_size_h
 function [mvs_x, mvs_y, mvs_type, frames_type] = extract_mvs(mvs_filename, block_size_w, block_size_h)
 
-    mv_format = "frame_count: %d, frame_type: %c, mv_dst: (%d, %d), mv_src: (%d, %d), mv_type: %c, motion: (%d, %d, %d), mb: (%d, %d)\n";
+    mv_format = 'frame_count: %d, frame_type: %c, mv_dst: (%d, %d), mv_src: (%d, %d), mv_type: %c, motion: (%d, %d, %d), mb: (%d, %d)\n';
 
     mvs_file = fopen(mvs_filename, 'r');
     mvs_raw = fscanf(mvs_file, mv_format, [12, Inf]);
