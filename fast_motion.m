@@ -1,4 +1,10 @@
 function [mvs_out_x, mvs_out_y] = fast_motion(frame, frame_prev, mvs_x, mvs_y, mb_size, frame_no)
+    scale = 4; % for quaterpel, 2 and 1 if disabled
+    lambda = 4;
+    frame = imresize(frame, scale);
+    frame_prev = imresize(frame_prev, scale);
+    mb_size = scale * mb_size;
+
     frame_width = size(frame, 2);
     frame_height = size(frame, 1);
     mbs_width = size(mvs_x, 2);
@@ -8,7 +14,7 @@ function [mvs_out_x, mvs_out_y] = fast_motion(frame, frame_prev, mvs_x, mvs_y, m
         stats_file = fopen(sprintf('fm_stats_frame%03d.txt', frame_no), 'w');
     end
 
-    for iter = 1 : 5
+    for iter = 1 : 2
         % this iteration is for jumping the block in current frame
         for jump = 0 : 2
             for mb_x = 2 + jump : 3 : mbs_width - 1
@@ -29,21 +35,21 @@ function [mvs_out_x, mvs_out_y] = fast_motion(frame, frame_prev, mvs_x, mvs_y, m
                     end
 
                     % add for each +/- offset
-                if 0
+                if 1
                     c_no = candidates;
-                    for offset = 1 : 2
+                    for offset = 2 : 2 : 8
                         for c_i = 1 : c_no
-                            cand_mv_x(candidates) = cand_mv_x(c_i) + offset;
-                            cand_mv_y(candidates) = cand_mv_y(c_i) + offset;
+                            cand_mv_x(candidates) = cand_mv_x(c_i) + offset / scale;
+                            cand_mv_y(candidates) = cand_mv_y(c_i) + offset / scale;
                             candidates = candidates + 1;
-                            cand_mv_x(candidates) = cand_mv_x(c_i) + offset;
-                            cand_mv_y(candidates) = cand_mv_y(c_i) - offset;
+                            cand_mv_x(candidates) = cand_mv_x(c_i) + offset / scale;
+                            cand_mv_y(candidates) = cand_mv_y(c_i) - offset / scale;
                             candidates = candidates + 1;
-                            cand_mv_x(candidates) = cand_mv_x(c_i) - offset;
-                            cand_mv_y(candidates) = cand_mv_y(c_i) + offset;
+                            cand_mv_x(candidates) = cand_mv_x(c_i) - offset / scale;
+                            cand_mv_y(candidates) = cand_mv_y(c_i) + offset / scale;
                             candidates = candidates + 1;
-                            cand_mv_x(candidates) = cand_mv_x(c_i) - offset;
-                            cand_mv_y(candidates) = cand_mv_y(c_i) - offset;
+                            cand_mv_x(candidates) = cand_mv_x(c_i) - offset / scale;
+                            cand_mv_y(candidates) = cand_mv_y(c_i) - offset / scale;
                             candidates = candidates + 1;
                         end
                     end
@@ -54,8 +60,8 @@ function [mvs_out_x, mvs_out_y] = fast_motion(frame, frame_prev, mvs_x, mvs_y, m
                     start_y = (mb_y - 1) * mb_size(1) + 1;
                     end_x = start_x + mb_size(2) - 1;
                     end_y = start_y + mb_size(1) - 1;
-                    block_xs = start_x : end_x;
-                    block_ys = start_y : end_y;
+                    block_xs = start_x : scale : end_x;
+                    block_ys = start_y : scale : end_y;
                     % skip block if out of bounds
                     if end_x > frame_width || start_x < 1 || end_y > frame_height || start_y < 1
                         continue;
@@ -66,19 +72,17 @@ function [mvs_out_x, mvs_out_y] = fast_motion(frame, frame_prev, mvs_x, mvs_y, m
 
                     % test new candidates
                     for cand = 1 : candidates - 1
-                        mv_x = cand_mv_x(cand);
-                        mv_y = cand_mv_y(cand);
-                        block_prev_xs = round(block_xs + mv_x);
-                        block_prev_ys = round(block_ys + mv_y);
+                        mv_x = cand_mv_x(cand) * scale;
+                        mv_y = cand_mv_y(cand) * scale;
 
                         % skip if out of bounds
-                        if  block_prev_xs(mb_size(1)) > frame_width  || block_prev_xs(1) < 1 || ...
-                            block_prev_ys(mb_size(2)) > frame_height || block_prev_ys(1) < 1
+                        if  end_x + round(mv_x) > frame_width  || start_x + round(mv_x) < 1 || ...
+                            end_y + round(mv_y) > frame_height || start_y + round(mv_y) < 1
                             continue;
                         end
 
-                        cost = mean2(abs(block_curr - frame_prev(block_prev_ys, block_prev_xs))) ...
-                                + smoothness_cost_mv(mv_x, mv_y, neighbors_x, neighbors_y);
+                        cost = mean2(abs(block_curr - frame_prev(block_ys + round(mv_y), block_xs + round(mv_x)))) ...
+                                + lambda * smoothness_cost_mv(cand_mv_x(cand), cand_mv_y(cand), neighbors_x, neighbors_y);
                         if cost < min_cost
                             if write_stats
                                 fprintf(stats_file, 'mb: (%d, %d), min_cost: %d, new_cost: %d, mv: (%d, %d), new_mv: (%d, %d)\n', mb_x, mb_y, min_cost, cost, mvs_x(mb_y, mb_x), mvs_y(mb_y, mb_x), cand_mv_x(cand), cand_mv_y(cand));
