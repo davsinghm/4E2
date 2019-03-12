@@ -10,8 +10,11 @@ function flo = flip_flo_fwd_to_bwd(orig_flo)
 
     for i = 1 : size(temp_flo, 1);
         for j = 1 : size(temp_flo, 2);
-            x = clip(temp_flo(i, j, 1), 1, width);
-            y = clip(temp_flo(i, j, 2), 1, height);
+            x = temp_flo(i, j, 1);
+            y = temp_flo(i, j, 2);
+            if x > width || x < 1 || y > height || y < 1
+                continue;
+            end;
             flo(y, x, 1) = -orig_flo(i, j, 1);
             flo(y, x, 2) = -orig_flo(i, j, 2);
         end
