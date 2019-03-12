@@ -1,4 +1,6 @@
 function [mvs_out_x, mvs_out_y] = fast_motion(frame, frame_prev, mvs_x, mvs_y, mb_size, frame_no)
+    %TODO only add (0, 0) for skip blocks as candidate
+
     % TODO pass 'mvs' this as arg
     mvs = zeros(size(mvs_x, 1), size(mvs_x, 2), 2);
     mvs(:, :, 1) = mvs_x;
@@ -38,6 +40,11 @@ function [mvs_out_x, mvs_out_y] = fast_motion(frame, frame_prev, mvs_x, mvs_y, m
                             candidates = candidates + 1;
                         end
                     end
+
+                    % add (0, 0) to candidates
+                    cand_mv_x(candidates) = 0;
+                    cand_mv_y(candidates) = 0;
+                    candidates = candidates + 1;
 
                     % add for each +/- offset
                 if 1
