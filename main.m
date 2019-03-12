@@ -188,8 +188,8 @@ function visualize_mvs(frame, seq_name, figure_no, mvs, step_w, step_h, show_nan
     y = (1 : height)' * ones(1, width);
     X = x(floor(step_w / 2) : step_w : end, floor(step_h / 2) : step_h : end);
     Y = y(floor(step_w / 2) : step_w : end, floor(step_h / 2) : step_h : end);
-    U = mvs(Y(: , 1), X(1, :), 1);
-    V = mvs(Y(: , 1), X(1, :), 2);
+    U = mvs(Y(:, 1), X(1, :), 1);
+    V = mvs(Y(:, 1), X(1, :), 2);
 
     hold on;
     quiver(X, Y, U, V, 0, 'g-', 'linewidth', 1);
