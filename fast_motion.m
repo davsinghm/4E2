@@ -1,4 +1,9 @@
 function [mvs_out_x, mvs_out_y] = fast_motion(frame, frame_prev, mvs_x, mvs_y, mb_size, frame_no)
+    % TODO pass 'mvs' this as arg
+    mvs = zeros(size(mvs_x, 1), size(mvs_x, 2), 2);
+    mvs(:, :, 1) = mvs_x;
+    mvs(:, :, 2) = mvs_y;
+
     scale = 4; % for quaterpel, 2 and 1 if disabled
     lambda = 4;
     frame = imresize(frame, scale);
@@ -67,7 +72,7 @@ function [mvs_out_x, mvs_out_y] = fast_motion(frame, frame_prev, mvs_x, mvs_y, m
                         continue;
                     end
                     block_curr = frame(block_ys, block_xs);
-                    [neighbors_x, neighbors_y] = get_neighbor_mvs(mb_x, mb_y, mvs_x, mvs_y);
+                    [neighbors_x, neighbors_y] = get_neighbor_mvs(mb_x, mb_y, mvs);
                     min_cost = intmax('int64'); % initial
 
                     % test new candidates
