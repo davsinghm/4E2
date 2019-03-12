@@ -78,7 +78,7 @@ for seq_i = 1 : size(seqs, 1)
 
             if 0 %save flow color image
                 vis_flow_color = flowToColor(frame_flo);
-                imwrite(vis_flow_color, sprintf('tmp/frame_%04d.png', frame_no));
+                imwrite(vis_flow_color, sprintf('tmp/%s_visflow_frame%04d_me%d.png', seq_name, frame_no, me));
             end
 
             mc_previous = generate_mc_frame(frame_prev, frame_flo);
