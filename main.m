@@ -73,7 +73,7 @@ for seq_i = 1 : size(seqs, 1)
             end
 
             if 0 % visualize mvs
-                visualize_mvs(frame, seq_name, 1, frame_flo, 16, 16); % visualize every 16th mv
+                visualize_mvs(frame, seq_name, 1, frame_flo, 16, 16, 1); % visualize every 16th mv
             end
 
             if 0 %save flow color image
