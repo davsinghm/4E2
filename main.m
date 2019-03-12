@@ -124,7 +124,7 @@ for seq_i = 1 : size(seqs, 1)
     seqs_avg_mc_mad(seq_i, me) = mean(frames_mc_mad(~isnan(frames_mc_mad)));
     seqs_avg_sm_cost(seq_i, me) = mean(frames_smoothness_cost(~isnan(frames_smoothness_cost)));
 
-    fprintf("avg_mc_diff: %.16f, avg_sm_cost%.16f\n", seqs_avg_mc_mad(seq_i, me), seqs_avg_sm_cost(seq_i, me));
+    fprintf("avg_mc_diff: %.16f, avg_sm_cost: %.16f\n", seqs_avg_mc_mad(seq_i, me), seqs_avg_sm_cost(seq_i, me));
 end
 end
 
