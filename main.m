@@ -91,10 +91,14 @@ for seq_i = 1 : size(seqs, 1)
             % imshow(frame_prev);
             % title('The previous frame');
             %
-            % figure(3);
-            % imshow(uint8(mc_previous));
-            % title('The motion compensated previous frame');
-            %
+            if 0 % show and save mc frame
+                mc_previous = uint8(mc_previous); % from double
+                figure(3);
+                imshow(mc_previous); title('The MC Previous Frame');
+                % write mc frame to disk
+                imwrite(mc_previous, sprintf('tmp/%s_mc_frame_%04d_me%d.png', seq_name, frame_no, me));
+            end
+
             % figure(4);
             % imshow(uint8(128 + double(frame_prev) - double(frame)));
             % title('The (non-mc) frame difference');
