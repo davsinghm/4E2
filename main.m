@@ -137,9 +137,7 @@ figure(6);
 hold on;
 title('Sequence vs Average MC Frame MAD');
 plot_x = 1 : size(seqs_avg_mc_mad, 1);
-plot(plot_x, seqs_avg_mc_mad(:, 1)); % 1 == gt
-plot(plot_x, seqs_avg_mc_mad(:, 2)); % 2 == ffmpeg
-plot(plot_x, seqs_avg_mc_mad(:, 3)); % 3 == fm
+bar(plot_x, [ seqs_avg_mc_mad(:, 1), seqs_avg_mc_mad(:, 2), seqs_avg_mc_mad(:, 3) ]); % 1 gt, 2 ffmpeg, 3 fm
 legend({'Groundtruth', 'FFmpeg Raw MVs', 'FastMotion'});
 xlabel('Sequence'); ylabel('Average MC MAD');
 hold off;
@@ -149,9 +147,7 @@ figure(7);
 hold on;
 title('Sequence vs Average Smoothness Cost');
 plot_x = 1 : size(seqs_avg_sm_cost, 1);
-plot(plot_x, seqs_avg_sm_cost(:, 1)); % 1 == gt
-plot(plot_x, seqs_avg_sm_cost(:, 2)); % 2 == ffmpeg
-plot(plot_x, seqs_avg_sm_cost(:, 3)); % 3 == fm
+bar(plot_x, [ seqs_avg_sm_cost(:, 1), seqs_avg_sm_cost(:, 2), seqs_avg_sm_cost(:, 3) ]); % 1 gt, 2 ffmpeg, 3 fm
 legend({'Groundtruth', 'FFmpeg Raw MVs', 'FastMotion'});
 xlabel('Sequence'); ylabel('Average Smoothness Cost');
 hold off;
