@@ -16,7 +16,7 @@ function [mvs_out_x, mvs_out_y] = fast_motion(frame, frame_prev, mvs_x, mvs_y, m
     frame_height = size(frame, 1);
     mbs_width = size(mvs_x, 2);
     mbs_height = size(mvs_y, 1);
-    write_stats = 0;
+    write_stats = 1;
     if write_stats
         stats_file = fopen(sprintf('fm_stats_frame%03d.txt', frame_no), 'w');
     end
