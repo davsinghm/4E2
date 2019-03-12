@@ -97,7 +97,9 @@ function [mvs_out_x, mvs_out_y] = fast_motion(frame, frame_prev, mvs_x, mvs_y, m
                                 + lambda * smoothness_cost_mv(cand_mv_x(cand), cand_mv_y(cand), neighbors_x, neighbors_y);
                         if cost < min_cost
                             if write_stats
-                                fprintf(stats_file, 'mb: (%d, %d), min_cost: %d, new_cost: %d, mv: (%d, %d), new_mv: (%d, %d)\n', mb_x, mb_y, min_cost, cost, mvs_x(mb_y, mb_x), mvs_y(mb_y, mb_x), cand_mv_x(cand), cand_mv_y(cand));
+                                if min_cost ~= intmax('int64')
+                                    fprintf(stats_file, 'mb: (%d, %d), min_cost: %0.05f, new_cost: %0.05f, mv: (%0.04f, %0.04f), new_mv: (%0.04f, %0.04f)\n', mb_x, mb_y, min_cost, cost, mvs_x(mb_y, mb_x), mvs_y(mb_y, mb_x), cand_mv_x(cand), cand_mv_y(cand));
+                                end
                             end
                             mvs_x(mb_y, mb_x) = cand_mv_x(cand);
                             mvs_y(mb_y, mb_x) = cand_mv_y(cand);
