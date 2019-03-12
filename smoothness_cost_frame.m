@@ -1,18 +1,29 @@
 % uses smoothness_cost_mv to calculate mean
-function cost = smoothness_cost_frame(mvs_x, mvs_y)
-    mbs_width = size(mvs_x, 2);
-    mbs_height = size(mvs_y, 1);
-    costs = zeros(size(mvs_x));
-    for mb_x = 1 : mbs_width
-        for mb_y = 1 : mbs_height
-            [neighbors_x, neighbors_y] = get_neighbor_mvs(mb_x, mb_y, mvs_x, mvs_y);
-            sc = smoothness_cost_mv(mvs_x(mb_y, mb_x), mvs_y(mb_y, mb_x), neighbors_x, neighbors_y);
-            if isnan(sc)
-                sc = 0;
-                fprintf('warning: the smoothness cost is nan for mb: %d, %d\n', mb_x, mb_y);
+% returns mean of smoothness costs of mvs. ignores nan mvs
+% warns about isolated mv. if mv has all nan surroundings
+function cost = smoothness_cost_frame(flow)
+    costs = nan(1, 1);
+    cost_i = 1;
+    for i = 1 : size(flow, 1)
+        for j = 1 : size(flow, 2)
+            mv_x = flow(i, j, 1);
+            mv_y = flow(i, j, 2);
+            [neighbors_x, neighbors_y] = get_neighbor_mvs(j, i, flow);
+            
+            % don't include cost of nan mv in costs
+            if isnan(mv_x) || isnan(mv_y)
+                continue;
             end
-            costs(mb_y, mb_x) = sc;
+
+            sc = smoothness_cost_mv(mv_x, mv_y, neighbors_x, neighbors_y);
+            if ~isnan(sc)
+                costs(cost_i) = sc;
+                cost_i = cost_i + 1;
+            else
+                fprintf('warning: (isolated mv?) the smoothness cost is nan at (i, j): %d, %d\n', i, j);
+            end
+
         end
     end
-    cost = mean2(costs);
+    cost = mean(costs);
 end
