@@ -67,7 +67,7 @@ for seq_i = 1 : size(seqs, 1)
                     frame_mvs_x = mvs_x(:, :, frame_no);
                     frame_mvs_y = mvs_y(:, :, frame_no);
                     if me == 3 % fast motion: refine motion vectors
-                        %[frame_mvs_x, frame_mvs_y] = fast_motion(frame, frame_prev, frame_mvs_x, frame_mvs_y, mb_size, frame_no);
+                        [frame_mvs_x, frame_mvs_y] = fast_motion(frame, frame_prev, frame_mvs_x, frame_mvs_y, mb_size, frame_no);
                     end
                     frame_flo = fill_dense_mvs_from_blocks([height, width], frame_mvs_x, frame_mvs_y, block_size_w, block_size_h);
             end
