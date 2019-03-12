@@ -101,6 +101,8 @@ function [mvs_out_x, mvs_out_y] = fast_motion(frame, frame_prev, mvs_x, mvs_y, m
                             end
                             mvs_x(mb_y, mb_x) = cand_mv_x(cand);
                             mvs_y(mb_y, mb_x) = cand_mv_y(cand);
+                            flow(mb_y, mb_x, 1) = cand_mv_x(cand);
+                            flow(mb_y, mb_x, 2) = cand_mv_y(cand);
                             min_cost = cost;
                         end
                     end
