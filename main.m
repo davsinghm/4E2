@@ -13,8 +13,9 @@ if system("cd FFmpeg && make") ~= 0
     error("make error");
 end
 
-avg_seqs_mc_mad = NaN(1, 3);
 seqs = get_sintel_sequences();
+seqs_avg_mc_mad = NaN(1, 3); % average mc frame mad
+seqs_avg_sm_cost = NaN(1, 3); % average smoothness cost
 
 for me = 1 : 3 % 1 for gt, 2 for fm, 3 for other
 for seq_i = 1 : size(seqs, 1)
@@ -47,9 +48,8 @@ for seq_i = 1 : size(seqs, 1)
 
     no_of_frames = size(frames_type, 2);
     % frame data, mad
-    frames_mc_mad = NaN(1, no_of_frames);
-    %frames_non_mc_mad = NaN(1, no_of_frames);
-    %frames_smoothness_cost = NaN(1, no_of_frames);
+    frames_mc_mad = NaN(1, no_of_frames); % each mc frame's mad
+    frames_smoothness_cost = NaN(1, no_of_frames); % each frame's smoothness cost
 
     for frame_no = 1 : no_of_frames
         frame = rgb2gray(imread(sprintf(orig_input_file_fmt, frame_no)));
@@ -83,14 +83,9 @@ for seq_i = 1 : size(seqs, 1)
 
             mc_previous = generate_mc_frame(frame_prev, frame_flo);
 
-            mc_mad = mean2(abs(double(frame) - double(mc_previous)));
-            non_mc_mad = mean2(abs(double(frame) - double(frame_prev)));
-            smoothness_cost = smoothness_cost_frame(frame_flo(1), frame_flo(2));
-
-            frames_mc_mad(frame_no) = mc_mad;
-            %frames_non_mc_mad(frame_no) = non_mc_mad;
-            %frames_smoothness_cost(frame_no) = smoothness_cost;
-            fprintf("frame_no: %03d, mc_diff: %.16f, smoothness: %d\n", frame_no, mc_mad, smoothness_cost);
+            frames_mc_mad(frame_no) = mean2(abs(double(frame) - double(mc_previous)));
+            frames_smoothness_cost(frame_no) = smoothness_cost_frame(frame_flo);
+            fprintf("frame_%03d, mc_diff: %.16f, smoothness: %d\n", frame_no, frames_mc_mad(frame_no), frames_smoothness_cost(frame_no));
 
             % figure(2);
             % imshow(frame_prev);
@@ -125,23 +120,37 @@ for seq_i = 1 : size(seqs, 1)
     % xlabel('Frame'); ylabel('Cost');
     % hold off;
 
-    avg_seq_mc_mad = mean(frames_mc_mad(i_y));
-    fprintf("avg_mc_diff: %.16f\n", avg_seq_mc_mad);
-    avg_seqs_mc_mad(seq_i, me) = avg_seq_mc_mad;
+    % calc avg costs: include only non-nan values
+    seqs_avg_mc_mad(seq_i, me) = mean(frames_mc_mad(~isnan(frames_mc_mad)));
+    seqs_avg_sm_cost(seq_i, me) = mean(frames_smoothness_cost(~isnan(frames_smoothness_cost)));
 
+    fprintf("avg_mc_diff: %.16f, avg_sm_cost%.16f\n", seqs_avg_mc_mad(seq_i, me), seqs_avg_sm_cost(seq_i, me));
 end
 end
 
-figure(2);
+% sequence vs avg mc mad
+figure(6);
 hold on;
-avg_frames_x = 1 : size(avg_seqs_mc_mad, 1);
-plot(avg_frames_x, avg_seqs_mc_mad(:, 1)); % 1 == gt
-plot(avg_frames_x, avg_seqs_mc_mad(:, 2)); % 2 == ffmpeg
-plot(avg_frames_x, avg_seqs_mc_mad(:, 3)); % 3 == fm
+title('Sequence vs Average MC Frame MAD');
+plot_x = 1 : size(seqs_avg_mc_mad, 1);
+plot(plot_x, seqs_avg_mc_mad(:, 1)); % 1 == gt
+plot(plot_x, seqs_avg_mc_mad(:, 2)); % 2 == ffmpeg
+plot(plot_x, seqs_avg_mc_mad(:, 3)); % 3 == fm
 legend({'Groundtruth', 'FFmpeg Raw MVs', 'FastMotion'});
 xlabel('Sequence'); ylabel('Average MC MAD');
 hold off;
-% need to generate error based on original frames
+
+% sequence vs avg mc mad
+figure(7);
+hold on;
+title('Sequence vs Average Smoothness Cost');
+plot_x = 1 : size(seqs_avg_sm_cost, 1);
+plot(plot_x, seqs_avg_sm_cost(:, 1)); % 1 == gt
+plot(plot_x, seqs_avg_sm_cost(:, 2)); % 2 == ffmpeg
+plot(plot_x, seqs_avg_sm_cost(:, 3)); % 3 == fm
+legend({'Groundtruth', 'FFmpeg Raw MVs', 'FastMotion'});
+xlabel('Sequence'); ylabel('Average Smoothness Cost');
+hold off;
 
 % export mvs from video and save to mvs_file
 function ffmpeg_export_mvs(video_file, temp_mvs_file)
