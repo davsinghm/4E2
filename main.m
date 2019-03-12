@@ -178,7 +178,7 @@ function flo = fill_dense_mvs_from_blocks(frame_size, mvs_x, mvs_y, block_size_w
 end
 
 % show vectors using quiver
-function visualize_mvs(frame, seq_name, figure_no, mvs, step_w, step_h)
+function visualize_mvs(frame, seq_name, figure_no, mvs, step_w, step_h, show_nan)
     figure(figure_no);
     [height, width, ~] = size(frame);
     imshow(frame); axis on;
@@ -192,7 +192,11 @@ function visualize_mvs(frame, seq_name, figure_no, mvs, step_w, step_h)
     V = mvs(Y(: , 1), X(1, :), 2);
 
     hold on;
-    quiver(X, Y, U, V, 0, 'g-', 'linewidth', 1); shg;
+    quiver(X, Y, U, V, 0, 'g-', 'linewidth', 1);
+    if show_nan %show nan with crosses
+        plot(X(isnan(U)), Y(isnan(V)), 'rx');
+    end
+    shg;
     hold off;
 end
 
