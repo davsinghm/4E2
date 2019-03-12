@@ -4,7 +4,7 @@ function flo = flip_flo_fwd_to_bwd(orig_flo)
     x = ones(height, 1) * (1 : width);
     y = (1 : height)' * ones(1, width);
 
-    flo = zeros(size(orig_flo));
+    flo = nan(size(orig_flo));
     temp_flo(:, :, 1) = round(x + orig_flo(:, :, 1));
     temp_flo(:, :, 2) = round(y + orig_flo(:, :, 2));
 
