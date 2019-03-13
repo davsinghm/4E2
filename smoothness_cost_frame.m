@@ -8,16 +8,16 @@ function cost = smoothness_cost_frame(flow)
         for j = 1 : size(flow, 2)
             mv_x = flow(i, j, 1);
             mv_y = flow(i, j, 2);
-            [neighbors_x, neighbors_y] = get_neighbor_mvs(j, i, flow);
-            
+            neighbors = get_neighbor_mvs(j, i, flow);
+
             % don't include cost of nan mv in costs
             if isnan(mv_x) || isnan(mv_y)
                 continue;
             end
 
-            sc = smoothness_cost_mv(mv_x, mv_y, neighbors_x, neighbors_y);
-            if ~isnan(sc)
-                costs(cost_i) = sc;
+            smoothness = smoothness_cost_mv([mv_x, mv_y], neighbors);
+            if ~isnan(smoothness)
+                costs(cost_i) = smoothness;
                 cost_i = cost_i + 1;
             else
                 fprintf('warning: (isolated mv?) the smoothness cost is nan at (i, j): %d, %d\n', i, j);
