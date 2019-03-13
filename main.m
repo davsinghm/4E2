@@ -64,12 +64,12 @@ for seq_i = 1 : size(seqs, 1)
                     frame_flo = -readFlowFile(sprintf(flo_file_fmt, frame_no - 1)); % flow files have negative mvs footnote [1]
                     frame_flo = flip_flo_fwd_to_bwd(-frame_flo); % test, arg: -ve, i.e. orig dir
                 case {2, 3} % ffmpeg mvs or fast motion
-                    frame_mvs_x = mvs_x(:, :, frame_no);
-                    frame_mvs_y = mvs_y(:, :, frame_no);
+                    frame_mvs(:, :, 1) = mvs_x(:, :, frame_no);
+                    frame_mvs(:, :, 2) = mvs_y(:, :, frame_no);
                     if me == 3 % fast motion: refine motion vectors
                         [frame_mvs_x, frame_mvs_y] = fast_motion(frame, frame_prev, frame_mvs_x, frame_mvs_y, mb_size, frame_no);
                     end
-                    frame_flo = fill_dense_mvs_from_blocks([height, width], frame_mvs_x, frame_mvs_y, block_size_w, block_size_h);
+                    frame_flo = fill_dense_mvs_from_blocks([height, width], frame_mvs, block_size_w, block_size_h);
             end
 
             if 0 % visualize mvs
@@ -163,10 +163,10 @@ function ffmpeg_export_mvs(video_file, temp_mvs_file)
 end
 
 % fill @u and @v matrices which are equal to @frame_size from @mvs_x, @mvs_y which are block level
-function flo = fill_dense_mvs_from_blocks(frame_size, mvs_x, mvs_y, block_size_w, block_size_h)
+function flo = fill_dense_mvs_from_blocks(frame_size, mvs, block_size_w, block_size_h)
     flo = NaN(frame_size(1), frame_size(2), 2);
-    for i = 1 : size(mvs_y, 1)
-        for j = 1 : size(mvs_x, 2)
+    for i = 1 : size(mvs, 1)
+        for j = 1 : size(mvs, 2)
             for mb_i = 1 : block_size_h
                 for mb_j = 1 : block_size_w
                     % conditions, to make sure the matrix doesn't grow more
@@ -175,10 +175,10 @@ function flo = fill_dense_mvs_from_blocks(frame_size, mvs_x, mvs_y, block_size_w
                             && mb_j + (j - 1) * block_size_w <= frame_size(2)
                         flo(mb_i + (i - 1) * block_size_h, ...
                             mb_j + (j - 1) * block_size_w, ...
-                            1 ) = mvs_x(i, j);
+                            1 ) = mvs(i, j, 1);
                         flo(mb_i + (i - 1) * block_size_h, ...
                             mb_j + (j - 1) * block_size_w, ...
-                            2 ) = mvs_y(i, j);
+                            2 ) = mvs(i, j, 2);
                     end
                 end
             end
