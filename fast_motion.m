@@ -93,12 +93,14 @@ function [mvs_out_x, mvs_out_y] = fast_motion(frame, frame_prev, mvs_x, mvs_y, m
                             continue;
                         end
 
-                        cost = mean2(abs(block_curr - frame_prev(block_ys + round(mv_y), block_xs + round(mv_x)))) ...
-                                + lambda * smoothness_cost_mv(cand_mv_x(cand), cand_mv_y(cand), neighbors_x, neighbors_y);
+                        mad = mean2(abs(block_curr - frame_prev(block_ys + round(mv_y), block_xs + round(mv_x))));
+                        smoothness = smoothness_cost_mv(cand_mv_x(cand), cand_mv_y(cand), neighbors_x, neighbors_y);
+                        cost = mad + lambda * smoothness;
                         if cost < min_cost
                             if write_stats
                                 if min_cost ~= intmax('int64')
-                                    fprintf(stats_file, 'mb: (%d, %d), min_cost: %0.05f, new_cost: %0.05f, mv: (%0.04f, %0.04f), new_mv: (%0.04f, %0.04f)\n', mb_x, mb_y, min_cost, cost, mvs_x(mb_y, mb_x), mvs_y(mb_y, mb_x), cand_mv_x(cand), cand_mv_y(cand));
+                                    fprintf(stats_file, 'mb: (%4d, %4d), min_cost: %10.05f, new_cost: %10.05f(mad: %7.02f, smc: %7.02f), mv: (%9.04f, %9.04f), new_mv: (%9.04f, %9.04f)\n', ...
+                                            mb_x, mb_y, min_cost, cost, mad, smoothness, mvs_x(mb_y, mb_x), mvs_y(mb_y, mb_x), cand_mv_x(cand), cand_mv_y(cand));
                                 end
                             end
                             mvs_x(mb_y, mb_x) = cand_mv_x(cand);
