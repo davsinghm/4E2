@@ -1,71 +1,66 @@
-function [mvs_out_x, mvs_out_y] = fast_motion(frame, frame_prev, mvs_x, mvs_y, mb_size, frame_no)
+function mvs_out = fast_motion(frame, frame_prev, mvs, mb_size, frame_no)
     %TODO only add (0, 0) for skip blocks as candidate
 
-    % TODO pass 'mvs' this as arg
-    mvs = zeros(size(mvs_x, 1), size(mvs_x, 2), 2);
-    mvs(:, :, 1) = mvs_x;
-    mvs(:, :, 2) = mvs_y;
-
     scale = 4; % for quaterpel, 2 and 1 if disabled
-    lambda = 4;
+    lambda = 0.5;
     frame = imresize(frame, scale);
     frame_prev = imresize(frame_prev, scale);
     mb_size = scale * mb_size;
 
     frame_width = size(frame, 2);
     frame_height = size(frame, 1);
-    mbs_width = size(mvs_x, 2);
-    mbs_height = size(mvs_y, 1);
-    write_stats = 1;
+    write_stats = 0;
     if write_stats
         stats_file = fopen(sprintf('fm_stats_frame%03d.txt', frame_no), 'w');
     end
 
-    for iter = 1 : 2
+    for iter = 1 : 3
         % this iteration is for jumping the block in current frame
-        for jump = 0 : 2
-            for mb_x = 2 + jump : 3 : mbs_width - 1
-                for mb_y = 2 + jump : 3 : mbs_height - 1
-
+        %for jump = 0 : 0
+            for mb_x = 2 : size(mvs, 2) - 1 % TODO handle edge mbs
+                for mb_y = 2 : size(mvs, 1) - 1
                     % prepare candidate mvs, make sure to include current mv
+                    cand_mv = zeros(1, 2);
                     candidates = 1;
-                    cand_mv_x = zeros(1, 9);
-                    cand_mv_y = zeros(1, 9);
+
+                    % add valid neighbors as candidates
                     for cx = -1 : 1
                         for cy = -1 : 1
-                            if (~isnan(mvs_x(mb_y + cy, mb_x + cx)) && ~isnan(mvs_x(mb_y + cy, mb_x + cx)))
-                                cand_mv_x(candidates) = mvs_x(mb_y + cy, mb_x + cx);
-                                cand_mv_y(candidates) = mvs_y(mb_y + cy, mb_x + cx);
+                            c_mv_x = mvs(mb_y + cy, mb_x + cx, 1);
+                            c_mv_y = mvs(mb_y + cy, mb_x + cx, 2);
+                            if ~isnan(c_mv_x) && ~isnan(c_mv_y) && c_mv_x ~= 0 && c_mv_y ~= 0 %ignore nan and already added (0, 0) mvs
+                                cand_mv(candidates, 1) = c_mv_x;
+                                cand_mv(candidates, 2) = c_mv_y;
+                                candidates = candidates + 1;
                             end
-                            candidates = candidates + 1;
                         end
                     end
 
                     % add (0, 0) to candidates
-                    cand_mv_x(candidates) = 0;
-                    cand_mv_y(candidates) = 0;
+                    cand_mv(candidates, 1) = 0;
+                    cand_mv(candidates, 2) = 0;
                     candidates = candidates + 1;
 
                     % add for each +/- offset
-                if 1
-                    c_no = candidates;
-                    for offset = 2 : 2 : 8
-                        for c_i = 1 : c_no
-                            cand_mv_x(candidates) = cand_mv_x(c_i) + offset / scale;
-                            cand_mv_y(candidates) = cand_mv_y(c_i) + offset / scale;
-                            candidates = candidates + 1;
-                            cand_mv_x(candidates) = cand_mv_x(c_i) + offset / scale;
-                            cand_mv_y(candidates) = cand_mv_y(c_i) - offset / scale;
-                            candidates = candidates + 1;
-                            cand_mv_x(candidates) = cand_mv_x(c_i) - offset / scale;
-                            cand_mv_y(candidates) = cand_mv_y(c_i) + offset / scale;
-                            candidates = candidates + 1;
-                            cand_mv_x(candidates) = cand_mv_x(c_i) - offset / scale;
-                            cand_mv_y(candidates) = cand_mv_y(c_i) - offset / scale;
-                            candidates = candidates + 1;
+                    if 1
+                        c_no = candidates;
+                        for offset = 0.25 : 0.25 : 0.5
+                            for c_i = 1 : c_no
+                                cand_mv(candidates, 1) = cand_mv(c_i, 1) + offset;
+                                cand_mv(candidates, 2) = cand_mv(c_i, 2) + offset;
+                                candidates = candidates + 1;
+                                cand_mv(candidates, 1) = cand_mv(c_i, 1) + offset;
+                                cand_mv(candidates, 2) = cand_mv(c_i, 2) - offset;
+                                candidates = candidates + 1;
+                                cand_mv(candidates, 1) = cand_mv(c_i, 1) - offset;
+                                cand_mv(candidates, 2) = cand_mv(c_i, 2) + offset;
+                                candidates = candidates + 1;
+                                cand_mv(candidates, 1) = cand_mv(c_i, 1) - offset;
+                                cand_mv(candidates, 2) = cand_mv(c_i, 2) - offset;
+                                candidates = candidates + 1;
+                            end
                         end
                     end
-                end
 
                     % frame val positions at current mb
                     start_x = (mb_x - 1) * mb_size(2) + 1;
@@ -79,13 +74,13 @@ function [mvs_out_x, mvs_out_y] = fast_motion(frame, frame_prev, mvs_x, mvs_y, m
                         continue;
                     end
                     block_curr = frame(block_ys, block_xs);
-                    [neighbors_x, neighbors_y] = get_neighbor_mvs(mb_x, mb_y, mvs);
+                    neighbors = get_neighbor_mvs(mb_x, mb_y, mvs);
                     min_cost = intmax('int64'); % initial
 
                     % test new candidates
                     for cand = 1 : candidates - 1
-                        mv_x = cand_mv_x(cand) * scale;
-                        mv_y = cand_mv_y(cand) * scale;
+                        mv_x = cand_mv(cand, 1) * scale;
+                        mv_y = cand_mv(cand, 2) * scale;
 
                         % skip if out of bounds
                         if  end_x + round(mv_x) > frame_width  || start_x + round(mv_x) < 1 || ...
@@ -94,29 +89,28 @@ function [mvs_out_x, mvs_out_y] = fast_motion(frame, frame_prev, mvs_x, mvs_y, m
                         end
 
                         mad = mean2(abs(block_curr - frame_prev(block_ys + round(mv_y), block_xs + round(mv_x))));
-                        smoothness = smoothness_cost_mv(cand_mv_x(cand), cand_mv_y(cand), neighbors_x, neighbors_y);
+                        smoothness = smoothness_cost_mv([cand_mv(cand, 1), cand_mv(cand, 2)], neighbors);
                         cost = mad + lambda * smoothness;
                         if cost < min_cost
                             if write_stats
                                 if min_cost ~= intmax('int64')
                                     fprintf(stats_file, 'mb: (%4d, %4d), min_cost: %10.05f, new_cost: %10.05f(mad: %7.02f, smc: %7.02f), mv: (%9.04f, %9.04f), new_mv: (%9.04f, %9.04f)\n', ...
-                                            mb_x, mb_y, min_cost, cost, mad, smoothness, mvs_x(mb_y, mb_x), mvs_y(mb_y, mb_x), cand_mv_x(cand), cand_mv_y(cand));
+                                            mb_x, mb_y, min_cost, cost, mad, smoothness, mvs(mb_y, mb_x, 1), mvs(mb_y, mb_x, 2), cand_mv(cand, 1), cand_mv(cand, 2));
                                 end
                             end
-                            mvs_x(mb_y, mb_x) = cand_mv_x(cand);
-                            mvs_y(mb_y, mb_x) = cand_mv_y(cand);
-                            flow(mb_y, mb_x, 1) = cand_mv_x(cand);
-                            flow(mb_y, mb_x, 2) = cand_mv_y(cand);
+                            mvs(mb_y, mb_x, 1) = cand_mv(cand, 1);
+                            mvs(mb_y, mb_x, 2) = cand_mv(cand, 2);
                             min_cost = cost;
                         end
                     end
                 end
             end
-        end
+        %end
     end
+
     if write_stats
         fclose(stats_file);
     end
-    mvs_out_x = mvs_x;
-    mvs_out_y = mvs_y;
+
+    mvs_out = mvs;
 end
