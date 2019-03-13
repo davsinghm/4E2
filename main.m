@@ -46,6 +46,8 @@ for seq_i = 1 : size(seqs, 1)
         [mvs_x, mvs_y, mvs_type, frames_type] = extract_mvs(temp_mvs_file, block_size_w, block_size_h);
     end
 
+    fprintf('\nsequence: %s, me: %d\n', seq_name, me);
+
     no_of_frames = size(frames_type, 2);
     % frame data, mad
     frames_mc_mad = NaN(1, no_of_frames); % each mc frame's mad
