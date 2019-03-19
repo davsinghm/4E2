@@ -92,7 +92,7 @@ for seq_i = 1 : size(seqs, 1)
                 visualize_mvs(frame, seq_name, 1, frame_flo, 16, 16, 1); % visualize every 16th mv
             end
 
-            if 0 %save flow color image
+            if 0 % save flow color image
                 vis_flow_color = flowToColor(frame_flo);
                 imwrite(vis_flow_color, sprintf('tmp/%s_visflow_frame%04d_me%d.png', seq_name, frame_no, me));
             end
