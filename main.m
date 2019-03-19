@@ -17,7 +17,7 @@ seqs = get_sintel_sequences();
 seqs_avg_mc_mad = NaN(1, 3); % average mc frame mad
 seqs_avg_sm_cost = NaN(1, 3); % average smoothness cost
 
-for me = 1 : 3 % 1 for gt, 2 for fm, 3 for other
+for me = 1 : 5 % 1 for gt, 2 for ffmpeg, 3 for fast-motion, 4 for deepflow, 5 for pca-flow
 for seq_i = 1 : size(seqs, 1)
 
     seq_name = seqs(seq_i, 1);
@@ -72,6 +72,20 @@ for seq_i = 1 : size(seqs, 1)
                         frame_mvs = fast_motion(frame, frame_prev, frame_mvs, mb_size, frame_no);
                     end
                     frame_flo = fill_dense_mvs_from_blocks([height, width], frame_mvs, block_size_w, block_size_h);
+                case {4, 5} % opencv or deepflow
+                    if me == 4
+                        flow_bin_name = 'opencv-deep';
+                    else
+                        flow_bin_name = 'opencv-pca';
+                    end
+                    % generate flow file
+                    ret_code = system(sprintf('./%s %s %s tmp/flow.flo', flow_bin_name, sprintf(orig_input_file_fmt, frame_no), sprintf(orig_input_file_fmt, frame_no - 1)));
+                    if ret_code ~= 0
+                        error('flow gen exit code is: %d', ret_code);
+                    end
+                    % read flow file
+                    frame_flo = -readFlowFile('tmp/flow.flo'); % flow files have negative mvs footnote [1]
+                    frame_flo = flip_flo_fwd_to_bwd(-frame_flo); % test, arg: -ve, i.e. orig dir
             end
 
             if 0 % visualize mvs
@@ -139,8 +153,8 @@ figure(6);
 hold on;
 title('Sequence vs Average MC Frame MAD');
 plot_x = 1 : size(seqs_avg_mc_mad, 1);
-bar(plot_x, [ seqs_avg_mc_mad(:, 1), seqs_avg_mc_mad(:, 2), seqs_avg_mc_mad(:, 3) ]); % 1 gt, 2 ffmpeg, 3 fm
-legend({'Groundtruth', 'FFmpeg Raw MVs', 'FastMotion'});
+bar(plot_x, [ seqs_avg_mc_mad(:, 1), seqs_avg_mc_mad(:, 2), seqs_avg_mc_mad(:, 3), seqs_avg_mc_mad(:, 4), seqs_avg_mc_mad(:, 5) ]); % 1 gt, 2 ffmpeg, 3 fm, 4 df, 5 pca
+legend({'Groundtruth', 'FFmpeg Raw MVs', 'FastMotion', 'DeepFlow', 'PCA-Flow'});
 xlabel('Sequence'); ylabel('Average MC MAD');
 hold off;
 
@@ -149,8 +163,8 @@ figure(7);
 hold on;
 title('Sequence vs Average Smoothness Cost');
 plot_x = 1 : size(seqs_avg_sm_cost, 1);
-bar(plot_x, [ seqs_avg_sm_cost(:, 1), seqs_avg_sm_cost(:, 2), seqs_avg_sm_cost(:, 3) ]); % 1 gt, 2 ffmpeg, 3 fm
-legend({'Groundtruth', 'FFmpeg Raw MVs', 'FastMotion'});
+bar(plot_x, [ seqs_avg_sm_cost(:, 1), seqs_avg_sm_cost(:, 2), seqs_avg_sm_cost(:, 3), seqs_avg_sm_cost(:, 4), seqs_avg_sm_cost(:, 5) ]); % 1 gt, 2 ffmpeg, 3 fm, 4 df, 5 pca
+legend({'Groundtruth', 'FFmpeg Raw MVs', 'FastMotion', 'DeepFlow', 'PCA-Flow'});
 xlabel('Sequence'); ylabel('Average Smoothness Cost');
 hold off;
 
