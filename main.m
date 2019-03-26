@@ -31,7 +31,7 @@ for seq_i = 1 : size(seqs, 1)
     flo_file_fmt = sprintf('%s/frame_%%04d.flo', flo_dir); % if loading external mvs
 
     % generate and read ffmpeg mvs
-    if me == 2 || 1 % always do this for now to check frame_type (or no_of_frames)
+    if 1 % always do this for now to check frame_type (or no_of_frames)
         temp_mvs_vid_file = "tmp/mvs.mp4"; % temporary file from which the mvs are extracted. the file is encoded from original source by x264, saving mvs to it.
 
         % encode orignal file to intermediary file with specific settings (gop size etc)
@@ -65,8 +65,7 @@ for seq_i = 1 : size(seqs, 1)
             [height, width, chans] = size(frame);
             switch ft{1}
                 case 'groundtruth'
-                    frame_flo = -readFlowFile(sprintf(flo_file_fmt, frame_no - 1)); % flow files have negative mvs footnote [1]
-                    frame_flo = flip_flo_fwd_to_bwd(-frame_flo); % test, arg: -ve, i.e. orig dir
+                    frame_flo = readFlowFile(sprintf(flo_file_fmt, frame_no - 1)); % flow files have negative mvs footnote [1]
                 case {'ffmpeg', 'fastmotion'} % ffmpeg mvs or fast motion
                     frame_mvs(:, :, 1) = mvs_x(:, :, frame_no);
                     frame_mvs(:, :, 2) = mvs_y(:, :, frame_no);
@@ -81,8 +80,12 @@ for seq_i = 1 : size(seqs, 1)
                         error('flow gen exit code is: %d', ret_code);
                     end
                     % read flow file
-                    frame_flo = -readFlowFile('tmp/flow.flo'); % flow files have negative mvs footnote [1]
-                    frame_flo = flip_flo_fwd_to_bwd(-frame_flo); % test, arg: -ve, i.e. orig dir
+                    frame_flo = readFlowFile('tmp/flow.flo');
+            end
+
+            % fwd mvs to bwd
+            if strcmp(ft{1}, 'ffmpeg') ~= 0 || strcmp(ft{1}, 'fastmotion') ~= 0
+                frame_flo = flip_flo_fwd_to_bwd(frame_flo); % test, arg: -ve, i.e. orig dir
             end
 
             if 0 % visualize mvs
