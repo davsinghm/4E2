@@ -17,7 +17,9 @@ seqs = get_sintel_sequences();
 seqs_avg_mc_mad = NaN(1, 3); % average mc frame mad
 seqs_avg_sm_cost = NaN(1, 3); % average smoothness cost
 
-for me = 1 : 5 % 1 for gt, 2 for ffmpeg, 3 for fast-motion, 4 for deepflow, 5 for pca-flow
+ft_i = 0;
+for ft = {'groundtruth', 'ffmpeg', 'fastmotion', 'deepflow', 'pca-flow'} % 1 for gt, 2 for ffmpeg, 3 for fast-motion, 4 for deepflow, 5 for pca-flow
+    ft_i = ft_i + 1;
 for seq_i = 1 : size(seqs, 1)
 
     seq_name = seqs(seq_i, 1);
@@ -46,7 +48,7 @@ for seq_i = 1 : size(seqs, 1)
         [mvs_x, mvs_y, mvs_type, frames_type] = extract_mvs(temp_mvs_file, block_size_w, block_size_h);
     end
 
-    fprintf('\nsequence: %s, me: %d\n', seq_name, me);
+    fprintf('\nsequence: %s, ft: %s\n', seq_name, ft{1});
 
     no_of_frames = size(frames_type, 2);
     % frame data, mad
@@ -61,25 +63,20 @@ for seq_i = 1 : size(seqs, 1)
 
             % fill u and v with same mv from block
             [height, width, chans] = size(frame);
-            switch me
-                case 1 % use groundtruth
+            switch ft{1}
+                case 'groundtruth'
                     frame_flo = -readFlowFile(sprintf(flo_file_fmt, frame_no - 1)); % flow files have negative mvs footnote [1]
                     frame_flo = flip_flo_fwd_to_bwd(-frame_flo); % test, arg: -ve, i.e. orig dir
-                case {2, 3} % ffmpeg mvs or fast motion
+                case {'ffmpeg', 'fastmotion'} % ffmpeg mvs or fast motion
                     frame_mvs(:, :, 1) = mvs_x(:, :, frame_no);
                     frame_mvs(:, :, 2) = mvs_y(:, :, frame_no);
-                    if me == 3 % fast motion: refine motion vectors
+                    if strcmp(ft{1}, 'fastmotion') == 0
                         frame_mvs = fast_motion(frame, frame_prev, frame_mvs, mb_size, frame_no);
                     end
                     frame_flo = fill_dense_mvs_from_blocks([height, width], frame_mvs, block_size_w, block_size_h);
-                case {4, 5} % opencv or deepflow
-                    if me == 4
-                        flow_bin_name = 'opencv-deep';
-                    else
-                        flow_bin_name = 'opencv-pca';
-                    end
+                case {'deepflow', 'pca-flow'} % opencv
                     % generate flow file
-                    ret_code = system(sprintf('./%s %s %s tmp/flow.flo', flow_bin_name, sprintf(orig_input_file_fmt, frame_no), sprintf(orig_input_file_fmt, frame_no - 1)));
+                    ret_code = system(sprintf('./%s %s %s tmp/flow.flo', ['opencv-', ft{1}], sprintf(orig_input_file_fmt, frame_no), sprintf(orig_input_file_fmt, frame_no - 1)));
                     if ret_code ~= 0
                         error('flow gen exit code is: %d', ret_code);
                     end
@@ -94,7 +91,7 @@ for seq_i = 1 : size(seqs, 1)
 
             if 0 % save flow color image
                 vis_flow_color = flowToColor(frame_flo);
-                imwrite(vis_flow_color, sprintf('tmp/%s_visflow_frame%04d_me%d.png', seq_name, frame_no, me));
+                imwrite(vis_flow_color, sprintf('tmp/%s_visflow_frame%04d_%s.png', seq_name, frame_no, ft{1}));
             end
 
             mc_previous = generate_mc_frame(frame_prev, frame_flo);
@@ -112,7 +109,7 @@ for seq_i = 1 : size(seqs, 1)
                 figure(3);
                 imshow(mc_previous); title('The MC Previous Frame');
                 % write mc frame to disk
-                imwrite(mc_previous, sprintf('tmp/%s_mc_frame_%04d_me%d.png', seq_name, frame_no, me));
+                imwrite(mc_previous, sprintf('tmp/%s_mc_frame_%04d_%s.png', seq_name, frame_no, ft{1}));
             end
 
             % figure(4);
@@ -141,10 +138,10 @@ for seq_i = 1 : size(seqs, 1)
     % hold off;
 
     % calc avg costs: include only non-nan values
-    seqs_avg_mc_mad(seq_i, me) = mean(frames_mc_mad(~isnan(frames_mc_mad)));
-    seqs_avg_sm_cost(seq_i, me) = mean(frames_smoothness_cost(~isnan(frames_smoothness_cost)));
+    seqs_avg_mc_mad(seq_i, ft_i) = mean(frames_mc_mad(~isnan(frames_mc_mad)));
+    seqs_avg_sm_cost(seq_i, ft_i) = mean(frames_smoothness_cost(~isnan(frames_smoothness_cost)));
 
-    fprintf("avg_mc_diff: %.16f, avg_sm_cost: %.16f\n", seqs_avg_mc_mad(seq_i, me), seqs_avg_sm_cost(seq_i, me));
+    fprintf("avg_mc_diff: %.16f, avg_sm_cost: %.16f\n", seqs_avg_mc_mad(seq_i, ft_i), seqs_avg_sm_cost(seq_i, ft_i));
 end
 end
 
