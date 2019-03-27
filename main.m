@@ -69,7 +69,7 @@ for seq_i = 1 : size(seqs, 1)
                 case {'ffmpeg', 'fastmotion'} % ffmpeg mvs or fast motion
                     frame_mvs(:, :, 1) = mvs_x(:, :, frame_no);
                     frame_mvs(:, :, 2) = mvs_y(:, :, frame_no);
-                    if strcmp(ft{1}, 'fastmotion') == 0
+                    if strcmp(ft{1}, 'fastmotion')
                         frame_mvs = fast_motion(frame, frame_prev, frame_mvs, mb_size, frame_no);
                     end
                     frame_flo = fill_dense_mvs_from_blocks([height, width], frame_mvs, block_size_w, block_size_h);
@@ -84,7 +84,7 @@ for seq_i = 1 : size(seqs, 1)
             end
 
             % fwd mvs to bwd
-            if strcmp(ft{1}, 'ffmpeg') ~= 0 || strcmp(ft{1}, 'fastmotion') ~= 0
+            if ~strcmp(ft{1}, 'ffmpeg') && ~strcmp(ft{1}, 'fastmotion')
                 frame_flo = flip_flo_fwd_to_bwd(frame_flo); % test, arg: -ve, i.e. orig dir
             end
 
