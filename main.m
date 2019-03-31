@@ -229,15 +229,15 @@ function visualize_mvs(frame, seq_name, figure_no, mvs, step_w, step_h, show_nan
 end
 
 % interpolate mc frame. replaces zeros where mvs are NaN
-function mc_frame = generate_mc_frame(frame, flo)
+function mc_frame = generate_mc_frame(frame, flow)
     x = ones(size(frame, 1), 1) * (1 : size(frame, 2));
     y = (1 : size(frame, 1))' * ones(1, size(frame, 2));
 
     % relace NaN values with zero in mc frame
-    flo(isnan(flo)) = 0;
+    flow(isnan(flow)) = 0;
 
-    offset_x = x + flo(:, :, 1);
-    offset_y = y + flo(:, :, 2);
+    offset_x = x + flow(:, :, 1);
+    offset_y = y + flow(:, :, 2);
     mc_frame = double(frame);
     for chan = 1 : size(frame, 3)
         mc_frame(:, :, chan) = interp2(x, y, double(frame(:, :, chan)), offset_x, offset_y);
