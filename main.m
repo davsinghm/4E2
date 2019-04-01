@@ -75,7 +75,7 @@ for seq_i = 1 : size(seqs, 1)
                     frame_flo = fill_dense_mvs_from_blocks([height, width], frame_mvs, block_size_w, block_size_h);
                 case {'deepflow', 'pca-flow'} % opencv
                     % generate flow file
-                    ret_code = system(sprintf('./%s %s %s tmp/flow.flo', ['opencv-', ft{1}], sprintf(orig_input_file_fmt, frame_no), sprintf(orig_input_file_fmt, frame_no - 1)));
+                    ret_code = system(sprintf('./%s %s %s tmp/flow.flo', ['opencv-', ft{1}], sprintf(orig_input_file_fmt, frame_no - 1), sprintf(orig_input_file_fmt, frame_no)));
                     if ret_code ~= 0
                         error('flow gen exit code is: %d', ret_code);
                     end
