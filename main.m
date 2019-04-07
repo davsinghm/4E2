@@ -63,39 +63,7 @@ for seq_i = 1 : size(seqs, 1)
 
             % fill u and v with same mv from block
             [height, width, chans] = size(frame);
-            switch ft{1}
-                case 'groundtruth'
-                    frame_flo = readFlowFile(sprintf(flo_file_fmt, frame_no - 1)); % flow files have negative mvs footnote [1]
-                    frame_occ_map = imread(sprintf(occ_file_fmt, frame_no - 1)) > 128; % load prev frame occ file, as we are generating current frame from previous frame.
-                case {'ffmpeg', 'fastmotion'} % ffmpeg mvs or fast motion
-                    frame_mvs(:, :, 1) = mvs_x(:, :, frame_no);
-                    frame_mvs(:, :, 2) = mvs_y(:, :, frame_no);
-                    if strcmp(ft{1}, 'fastmotion')
-                        frame_mvs = fast_motion(frame, frame_prev, frame_mvs, mb_size, frame_no);
-                    end
-                    frame_flo = fill_dense_mvs_from_blocks([height, width], frame_mvs, block_size_w, block_size_h);
-                case {'deepflow', 'pca-flow'} % opencv
-                    % generate flow file
-                    ret_code = system(sprintf('./%s %s %s tmp/flow.flo', ['opencv-', ft{1}], sprintf(orig_input_file_fmt, frame_no - 1), sprintf(orig_input_file_fmt, frame_no)));
-                    if ret_code ~= 0
-                        error('flow gen exit code is: %d', ret_code);
-                    end
-                    % read flow file
-                    frame_flo = readFlowFile('tmp/flow.flo');
-                    frame_occ_map = zeros(size(frame_flo));
-            end
-
-            % fwd mvs to bwd
-            if ~strcmp(ft{1}, 'ffmpeg') && ~strcmp(ft{1}, 'fastmotion')
-                frame_flo = flip_flo_fwd_to_bwd(frame_flo, frame_occ_map); % test, arg: -ve, i.e. orig dir
-            end
-
-            [success, message, messageid] = mkdir(sprintf('sintel-flow/%s/%s', seq_name, ft{1}));
-            if success ~= 1
-                error(message);
-            end
-            % save flow, so that we don't have to generate it everytime
-            writeFlowFile(frame_flo, sprintf('sintel-flow/%s/%s/frame_%04d.flo', seq_name, ft{1}, frame_no));
+            [frame_flo, frame_occ_map] = load_frame_flow(ft{1}, seq_name, frame_no, flo_file_fmt, occ_file_fmt, mvs_x, mvs_y, frame, frame_prev, mb_size);
 
             if 0 % visualize mvs
                 visualize_mvs(frame, seq_name, 1, frame_flo, 16, 16, 1); % visualize every 16th mv
@@ -210,6 +178,52 @@ function flow = fill_dense_mvs_from_blocks(frame_size, mvs, mb_size)
             end
         end
     end
+end
+
+function [frame_flo, frame_occ_map] = load_frame_flow(flow_type, seq_name, frame_no, flo_file_fmt, occ_file_fmt, mvs_x, mvs_y, frame, frame_prev, mb_size)
+
+    [height, width, chans] = size(frame);
+    frame_flo_flipped_filename = sprintf('sintel-flow/%s/%s/frame_%04d.flo', seq_name, flow_type, frame_no);
+
+    if strcmp(flow_type, 'groundtruth')
+        frame_occ_map = imread(sprintf(occ_file_fmt, frame_no - 1)) > 128; % load prev frame occ file, as we are generating current frame from previous frame.
+    else
+        frame_occ_map = zeros(size(frame_flo)); % empty map; no occlusions
+    end
+
+    switch flow_type
+        case 'groundtruth'
+            frame_flo = readFlowFile(sprintf(flo_file_fmt, frame_no - 1)); % flow files have negative mvs footnote [1]
+        case {'ffmpeg', 'fastmotion'} % ffmpeg mvs or fast motion
+            frame_mvs(:, :, 1) = mvs_x(:, :, frame_no);
+            frame_mvs(:, :, 2) = mvs_y(:, :, frame_no);
+            if strcmp(flow_type, 'fastmotion')
+                frame_mvs = fast_motion(frame, frame_prev, frame_mvs, mb_size, frame_no);
+            end
+            frame_flo = fill_dense_mvs_from_blocks([height, width], frame_mvs, mb_size);
+        case {'deepflow', 'pca-flow'} % opencv
+            % generate flow file
+            ret_code = system(sprintf('./%s %s %s tmp/flow.flo', ['opencv-', flow_type], sprintf(orig_input_file_fmt, frame_no - 1), sprintf(orig_input_file_fmt, frame_no)));
+            if ret_code ~= 0
+                error('flow gen exit code is: %d', ret_code);
+            end
+            % read flow file
+            frame_flo = readFlowFile('tmp/flow.flo');
+    end
+
+    % fwd mvs to bwd
+    if ~strcmp(flow_type, 'ffmpeg') && ~strcmp(flow_type, 'fastmotion')
+        frame_flo = flip_flo_fwd_to_bwd(frame_flo, frame_occ_map); % test, arg: -ve, i.e. orig dir
+    end
+
+    % save flow, so that we don't have to generate it everytime:
+    %    check directory:
+    [success, message, messageid] = mkdir(sprintf('sintel-flow/%s/%s', seq_name, flow_type));
+    if success ~= 1
+        error(message);
+    end
+    %    write flow file
+    writeFlowFile(frame_flo, sprintf('sintel-flow/%s/%s/frame_%04d.flo', seq_name, flow_type, frame_no));
 end
 
 % show vectors using quiver
