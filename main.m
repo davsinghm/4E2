@@ -185,10 +185,16 @@ function [frame_flo, frame_occ_map] = load_frame_flow(flow_type, seq_name, frame
     [height, width, chans] = size(frame);
     frame_flo_flipped_filename = sprintf('sintel-flow/%s/%s/frame_%04d.flo', seq_name, flow_type, frame_no);
 
+    % load or generate occlusion map
     if strcmp(flow_type, 'groundtruth')
         frame_occ_map = imread(sprintf(occ_file_fmt, frame_no - 1)) > 128; % load prev frame occ file, as we are generating current frame from previous frame.
     else
-        frame_occ_map = zeros(size(frame_flo)); % empty map; no occlusions
+        frame_occ_map = zeros([height, width]); % empty map; no occlusions
+    end
+
+    if isfile(frame_flo_flipped_filename) % check if file exists
+        fprintf('load_frame_flow: returning pre-generated flo file\n');
+        frame_flo = readFlowFile(frame_flo_flipped_filename);
     end
 
     switch flow_type
