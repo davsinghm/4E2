@@ -247,8 +247,8 @@ function mc_frame = generate_mc_frame(frame, flow)
         mc_frame(:, :, chan) = interp2(x, y, double(frame(:, :, chan)), offset_x, offset_y);
     end
 
-    % FIXME even when u and v have valid nums, it still gives NaN. figure out what makes them NaN
-    % update: quick looks, seems like there are on edges when mvs are outside the frame
+    % the pixel values are return nan, when (default, linear) extrapolation doesn't work
+    % replacing it with zero for averaging
     mc_frame(isnan(mc_frame)) = 0;
 end
 
