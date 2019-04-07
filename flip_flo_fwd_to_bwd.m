@@ -26,4 +26,37 @@ function flow = flip_flo_fwd_to_bwd(input_flow, occ_map)
             flow(y, x, 2) = -input_flow(i, j, 2);
         end
     end
+
+    % replace nan values
+    for i = 1 : height;
+        for j = 1 : width;
+
+            if ~isnan(flow(i, j, 1)) && ~isnan(flow(i, j, 2))
+                continue;
+            end
+
+            % ignore occluded areas
+            if occ_map(i, j)
+                continue;
+            end
+
+            if i == 1 || i == height || j == 1 || j == width
+                continue;
+            end
+
+            if ~isnan(flow(i - 1, j, 1)) && ~isnan(flow(i + 1, j, 1)) && ...
+                ~isnan(flow(i - 1, j, 2)) && ~isnan(flow(i + 1, j, 2))
+                flow(i, j, 1) = (flow(i - 1, j, 1) + flow(i + 1, j, 1)) / 2;
+                flow(i, j, 2) = (flow(i - 1, j, 2) + flow(i + 1, j, 2)) / 2;
+                continue;
+            end
+
+            if ~isnan(flow(i, j - 1, 1)) && ~isnan(flow(i, j + 1, 1)) && ...
+                ~isnan(flow(i, j - 1, 2)) && ~isnan(flow(i, j + 1, 2))
+                flow(i, j, 1) = (flow(i, j - 1, 1) + flow(i, j + 1, 1)) / 2;
+                flow(i, j, 2) = (flow(i, j - 1, 2) + flow(i, j + 1, 2)) / 2;
+                continue;
+            end
+        end
+    end
 end
