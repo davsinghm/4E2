@@ -88,6 +88,10 @@ for seq_i = 1 : size(seqs, 1)
                 frame_flo = flip_flo_fwd_to_bwd(frame_flo); % test, arg: -ve, i.e. orig dir
             end
 
+            [success, message, messageid] = mkdir(sprintf('sintel-flow/%s/%s', seq_name, ft{1}));
+            if success ~= 1
+                error(message);
+            end
             % save flow, so that we don't have to generate it everytime
             writeFlowFile(frame_flo, sprintf('sintel-flow/%s/%s/frame_%04d.flo', seq_name, ft{1}, frame_no));
 
