@@ -17,8 +17,9 @@
 %
 % @param      enable_subpel: if disabled, the value will be rounded off
 % @return [@mvs_x, @mvs_y]: one motion vector per block, NaN where no mvs was
-% found. block size is defined by @block_size_w and @block_size_h
-function [mvs_x, mvs_y, mvs_type, frames_type] = extract_mvs(mvs_filename, block_size_w, block_size_h)
+% found. block size is defined by @mb_size = [block_size_h, block_size_w]
+function [mvs_x, mvs_y, mvs_type, frames_type] = extract_mvs(mvs_filename, mb_size)
+    block_size_h = mb_size(1); block_size_w = mb_size(2);
 
     mv_format = 'frame_count: %d, frame_type: %c, mv_dst: (%d, %d), mv_src: (%d, %d), mv_type: %c, motion: (%d, %d, %d), mb: (%d, %d)\n';
 

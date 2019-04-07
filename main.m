@@ -4,9 +4,7 @@ close all;
 clear;
 
 % block size
-block_size_w = 4;
-block_size_h = 4;
-mb_size = [block_size_h, block_size_w];
+mb_size = [4, 4]; % h x w
 
 % "make" sure
 if system("cd FFmpeg && make") ~= 0
@@ -47,7 +45,7 @@ for seq_i = 1 : size(seqs, 1)
         % read mvs from file
         temp_mvs_file = "tmp/mvs.txt";
         ffmpeg_export_mvs(temp_mvs_vid_file, temp_mvs_file);
-        [mvs_x, mvs_y, mvs_type, frames_type] = extract_mvs(temp_mvs_file, block_size_w, block_size_h);
+        [mvs_x, mvs_y, mvs_type, frames_type] = extract_mvs(temp_mvs_file, mb_size);
     end
 
     fprintf('\nsequence: %s, ft: %s\n', seq_name, ft{1});
@@ -190,7 +188,8 @@ function ffmpeg_export_mvs(video_file, temp_mvs_file)
 end
 
 % fill @u and @v matrices which are equal to @frame_size from @mvs_x, @mvs_y which are block level
-function flow = fill_dense_mvs_from_blocks(frame_size, mvs, block_size_w, block_size_h)
+function flow = fill_dense_mvs_from_blocks(frame_size, mvs, mb_size)
+    block_size_h = mb_size(1); block_size_w = mb_size(2);
     flow = NaN(frame_size(1), frame_size(2), 2);
     for i = 1 : size(mvs, 1)
         for j = 1 : size(mvs, 2)
