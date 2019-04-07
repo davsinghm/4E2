@@ -182,8 +182,8 @@ function ffmpeg_export_mvs(video_file, temp_mvs_file)
 end
 
 % fill @u and @v matrices which are equal to @frame_size from @mvs_x, @mvs_y which are block level
-function flo = fill_dense_mvs_from_blocks(frame_size, mvs, block_size_w, block_size_h)
-    flo = NaN(frame_size(1), frame_size(2), 2);
+function flow = fill_dense_mvs_from_blocks(frame_size, mvs, block_size_w, block_size_h)
+    flow = NaN(frame_size(1), frame_size(2), 2);
     for i = 1 : size(mvs, 1)
         for j = 1 : size(mvs, 2)
             for mb_i = 1 : block_size_h
@@ -192,10 +192,10 @@ function flo = fill_dense_mvs_from_blocks(frame_size, mvs, block_size_w, block_s
                     % than x, y
                     if mb_i + (i - 1) * block_size_h <= frame_size(1) ...
                             && mb_j + (j - 1) * block_size_w <= frame_size(2)
-                        flo(mb_i + (i - 1) * block_size_h, ...
+                        flow(mb_i + (i - 1) * block_size_h, ...
                             mb_j + (j - 1) * block_size_w, ...
                             1 ) = mvs(i, j, 1);
-                        flo(mb_i + (i - 1) * block_size_h, ...
+                        flow(mb_i + (i - 1) * block_size_h, ...
                             mb_j + (j - 1) * block_size_w, ...
                             2 ) = mvs(i, j, 2);
                     end
