@@ -25,10 +25,12 @@ for seq_i = 1 : size(seqs, 1)
     seq_name = seqs(seq_i, 1);
     frames_dir = seqs(seq_i, 2);
     flo_dir = seqs(seq_i, 3);
-    %no_of_frames = str2num(seqs(seq_i, 4)); do this when not restricted to p
+    occ_dir = seqs(seq_i, 4);
+    %no_of_frames = str2num(seqs(seq_i, 5)); do this when not restricted to p
 
     orig_input_file_fmt = sprintf('%s/frame_%%04d.png', frames_dir);
     flo_file_fmt = sprintf('%s/frame_%%04d.flo', flo_dir); % if loading external mvs
+    occ_file_fmt = sprintf('%s/frame_%%04d.png', occ_dir);
 
     % generate and read ffmpeg mvs
     if 1 % always do this for now to check frame_type (or no_of_frames)
@@ -66,6 +68,7 @@ for seq_i = 1 : size(seqs, 1)
             switch ft{1}
                 case 'groundtruth'
                     frame_flo = readFlowFile(sprintf(flo_file_fmt, frame_no - 1)); % flow files have negative mvs footnote [1]
+                    frame_occ_map = imread(sprintf(occ_file_fmt, frame_no - 1)) > 128; % load prev frame occ file, as we are generating current frame from previous frame.
                 case {'ffmpeg', 'fastmotion'} % ffmpeg mvs or fast motion
                     frame_mvs(:, :, 1) = mvs_x(:, :, frame_no);
                     frame_mvs(:, :, 2) = mvs_y(:, :, frame_no);
@@ -81,11 +84,12 @@ for seq_i = 1 : size(seqs, 1)
                     end
                     % read flow file
                     frame_flo = readFlowFile('tmp/flow.flo');
+                    frame_occ_map = zeros(size(frame_flo));
             end
 
             % fwd mvs to bwd
             if ~strcmp(ft{1}, 'ffmpeg') && ~strcmp(ft{1}, 'fastmotion')
-                frame_flo = flip_flo_fwd_to_bwd(frame_flo); % test, arg: -ve, i.e. orig dir
+                frame_flo = flip_flo_fwd_to_bwd(frame_flo, frame_occ_map); % test, arg: -ve, i.e. orig dir
             end
 
             [success, message, messageid] = mkdir(sprintf('sintel-flow/%s/%s', seq_name, ft{1}));

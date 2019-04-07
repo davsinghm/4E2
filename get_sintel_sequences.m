@@ -1,6 +1,6 @@
 % return list of sequences with each row: sequence name, path to frame pngs, path to flow files, no of frames
 function seqs = get_sintel_sequences()
-    seqs = strings(1, 4);
+    seqs = strings(1, 5);
 
     seqs(1, 1) = 'alley_1';
     seqs(2, 1) = 'alley_2';
@@ -29,6 +29,7 @@ function seqs = get_sintel_sequences()
     for seq = 1 : size(seqs, 1)
         seqs(seq, 2) = strcat('sintel/training/final/', seqs(seq, 1));
         seqs(seq, 3) = strcat('sintel/training/flow/', seqs(seq, 1));
-        seqs(seq, 4) = num2str(numel(dir(strcat(seqs(seq, 2), '/*.png'))));
+        seqs(seq, 4) = strcat('sintel/training/occlusions/', seqs(seq, 1));
+        seqs(seq, 5) = num2str(numel(dir(strcat(seqs(seq, 2), '/*.png'))));
     end
 end
