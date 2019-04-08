@@ -195,6 +195,7 @@ function [frame_flo, frame_occ_map] = load_frame_flow(flow_type, seq_name, frame
     if isfile(frame_flo_flipped_filename) % check if file exists
         fprintf('load_frame_flow: returning pre-generated flo file\n');
         frame_flo = readFlowFile(frame_flo_flipped_filename);
+        return;
     end
 
     switch flow_type
