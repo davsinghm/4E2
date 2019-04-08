@@ -66,8 +66,9 @@ for seq_i = 1 : size(seqs, 1)
             [height, width, chans] = size(frame);
             [frame_flo, frame_occ_map] = load_frame_flow(ft{1}, seq_name, frame_no, flo_file_fmt, occ_file_fmt, mvs_x, mvs_y, frame, frame_prev, mb_size);
 
-            if 0 % visualize mvs
-                visualize_mvs(frame, seq_name, 1, frame_flo, 16, 16, 1); % visualize every 16th mv
+            if 1 % visualize mvs
+                viz_mvs = visualize_mvs(frame_rgb, seq_name, 1, frame_flo, 16, 16, 1); % visualize every 16th mv
+                saveas(viz_mvs, sprintf('tmp/%s_vismvs_frame%04d_%s', seq_name, frame_no, ft{1}), 'epsc');
             end
 
             if 1 % save flow color image
@@ -236,8 +237,8 @@ function [frame_flo, frame_occ_map] = load_frame_flow(flow_type, seq_name, frame
 end
 
 % show vectors using quiver
-function visualize_mvs(frame, seq_name, figure_no, mvs, step_w, step_h, show_nan)
-    figure(figure_no);
+function fig = visualize_mvs(frame, seq_name, figure_no, mvs, step_w, step_h, show_nan)
+    fig = figure(figure_no);
     [height, width, ~] = size(frame);
     imshow(frame); axis on;
     title([seq_name, ', F: ', num2str(figure_no)]);
