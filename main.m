@@ -56,7 +56,8 @@ for seq_i = 1 : size(seqs, 1)
     frames_smoothness_cost = NaN(1, no_of_frames); % each frame's smoothness cost
 
     for frame_no = 1 : no_of_frames
-        frame = rgb2gray(imread(sprintf(orig_input_file_fmt, frame_no)));
+        frame_rgb = imread(sprintf(orig_input_file_fmt, frame_no));
+        frame = rgb2gray(frame_rgb);
 
         % ignore other frames for now
         if frame_no > 1 && frames_type(frame_no) == 'p'
@@ -85,11 +86,11 @@ for seq_i = 1 : size(seqs, 1)
             % title('The previous frame');
             %
             if 1 % show and save mc frame
-                mc_previous = uint8(mc_previous); % from double
+                mc_previous_rgb = uint8(generate_mc_frame(frame_rgb_prev, frame_flo)); % from double
                 figure(3);
-                imshow(mc_previous); title('The MC Previous Frame');
+                imshow(mc_previous_rgb); title('The MC Previous Frame');
                 % write mc frame to disk
-                imwrite(mc_previous, sprintf('tmp/%s_mc_frame_%04d_%s.png', seq_name, frame_no, ft{1}));
+                imwrite(mc_previous_rgb, sprintf('tmp/%s_mc_frame_%04d_%s.png', seq_name, frame_no, ft{1}));
             end
 
             % figure(4);
@@ -101,6 +102,7 @@ for seq_i = 1 : size(seqs, 1)
             % title('The MC frame difference');
         end
 
+        frame_rgb_prev = frame_rgb;
         frame_prev = frame;
         frame_no = frame_no + 1;
     end
