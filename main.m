@@ -241,7 +241,7 @@ function fig = visualize_mvs(frame, seq_name, figure_no, mvs, step_w, step_h, sh
     fig = figure(figure_no);
     [height, width, ~] = size(frame);
     imshow(frame); axis on;
-    title([seq_name, ', F: ', num2str(figure_no)]);
+    title(sprintf('%s, frame: %d', seq_name, figure_no), 'Interpreter', 'none');
 
     x = ones(height, 1) * (1 : width);
     y = (1 : height)' * ones(1, width);
