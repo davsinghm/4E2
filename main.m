@@ -3,6 +3,8 @@ addpath 'utils' 'utils/flow_code';
 close all;
 clear;
 
+use_cached_flow = 0;
+
 % block size
 mb_size = [4, 4]; % h x w
 
@@ -64,7 +66,7 @@ for seq_i = 1 : size(seqs, 1)
 
             % fill u and v with same mv from block
             [height, width, chans] = size(frame);
-            [frame_flo, frame_occ_map] = load_frame_flow(ft{1}, seq_name, frame_no, flo_file_fmt, occ_file_fmt, mvs_x, mvs_y, frame, frame_prev, mb_size);
+            [frame_flo, frame_occ_map] = load_frame_flow(ft{1}, seq_name, frame_no, flo_file_fmt, occ_file_fmt, mvs_x, mvs_y, frame, frame_prev, mb_size, use_cached_flow);
 
             if 1 % visualize mvs
                 viz_mvs_fig_title = sprintf('%s, frame: %d', seq_name, frame_no);
@@ -197,7 +199,7 @@ function [frame_flo, frame_occ_map] = load_frame_flow(flow_type, seq_name, frame
         frame_occ_map = zeros([height, width]); % empty map; no occlusions
     end
 
-    if isfile(frame_flo_flipped_filename) % check if file exists
+    if use_cached_flow && isfile(frame_flo_flipped_filename) % check if file exists
         fprintf('load_frame_flow: returning pre-generated flo file\n');
         frame_flo = readFlowFile(frame_flo_flipped_filename);
         return;
