@@ -67,7 +67,8 @@ for seq_i = 1 : size(seqs, 1)
             [frame_flo, frame_occ_map] = load_frame_flow(ft{1}, seq_name, frame_no, flo_file_fmt, occ_file_fmt, mvs_x, mvs_y, frame, frame_prev, mb_size);
 
             if 1 % visualize mvs
-                viz_mvs = visualize_mvs(frame_rgb, seq_name, 1, frame_flo, 16, 16, 1); % visualize every 16th mv
+                viz_mvs_fig_title = sprintf('%s, frame: %d', seq_name, frame_no);
+                viz_mvs = visualize_mvs(frame_rgb, viz_mvs_fig_title, 1, frame_flo, 16, 16, 1); % visualize every 16th mv
                 saveas(viz_mvs, sprintf('tmp/%s_vismvs_frame%04d_%s', seq_name, frame_no, ft{1}), 'svg');
             end
 
@@ -237,11 +238,11 @@ function [frame_flo, frame_occ_map] = load_frame_flow(flow_type, seq_name, frame
 end
 
 % show vectors using quiver
-function fig = visualize_mvs(frame, seq_name, figure_no, mvs, step_w, step_h, show_nan)
+function fig = visualize_mvs(frame, fig_title, figure_no, mvs, step_w, step_h, show_nan)
     fig = figure(figure_no);
     [height, width, ~] = size(frame);
     imshow(frame); axis on;
-    title(sprintf('%s, frame: %d', seq_name, figure_no), 'Interpreter', 'none');
+    title(fig_title, 'Interpreter', 'none');
 
     x = ones(height, 1) * (1 : width);
     y = (1 : height)' * ones(1, width);
