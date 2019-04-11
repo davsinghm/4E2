@@ -116,7 +116,7 @@ for seq_i = 1 : size(seqs, 1)
     % % show mad graphs
     % figure(1);
     % hold on;
-    i_y = ~isnan(frames_mc_mad);% & ~isnan(frames_non_mc_mad);
+    % i_y = ~isnan(frames_mc_mad);% & ~isnan(frames_non_mc_mad);
     % frames_x = 1 : size(i_y(i_y), 2);
     % plot(frames_x, frames_mc_mad(i_y));
     % plot(frames_x, frames_smoothness_cost(i_y));
