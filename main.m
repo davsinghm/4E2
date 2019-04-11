@@ -68,7 +68,7 @@ for seq_i = 1 : size(seqs, 1)
 
             % fill u and v with same mv from block
             [height, width, chans] = size(frame);
-            [frame_flo, frame_occ_map] = load_frame_flow(ft{1}, seq_name, frame_no, flo_file_fmt, occ_file_fmt, mvs_x, mvs_y, frame, frame_prev, mb_size, use_cached_flow);
+            [frame_flo, frame_occ_map] = load_frame_flow(ft{1}, seq_name, frame_no, flo_file_fmt, occ_file_fmt, mvs_x, mvs_y, frame, frame_prev, mb_size, orig_input_file_fmt, use_cached_flow);
 
             if 1 % visualize mvs
                 viz_show_occ = 1; % show red crosses at nan-mvs (occlusions/uncovered areas)
@@ -202,7 +202,7 @@ function flow = fill_dense_mvs_from_blocks(frame_size, mvs, mb_size)
     end
 end
 
-function [frame_flo, frame_occ_map] = load_frame_flow(flow_type, seq_name, frame_no, flo_file_fmt, occ_file_fmt, mvs_x, mvs_y, frame, frame_prev, mb_size, use_cached_flow)
+function [frame_flo, frame_occ_map] = load_frame_flow(flow_type, seq_name, frame_no, flo_file_fmt, occ_file_fmt, mvs_x, mvs_y, frame, frame_prev, mb_size, orig_input_file_fmt, use_cached_flow)
 
     flow_cache_dir = 'flow-cache';
     [height, width, chans] = size(frame);
