@@ -209,8 +209,9 @@ function [frame_flo, frame_occ_map] = load_frame_flow(flow_type, seq_name, frame
     frame_flo_flipped_filename = sprintf('%s/%s/%s/frame_%04d.flo', flow_cache_dir, seq_name, flow_type, frame_no);
 
     % load or generate occlusion map
-    if strcmp(flow_type, 'groundtruth')
-        frame_occ_map = imread(sprintf(occ_file_fmt, frame_no - 1)) > 128; % load prev frame occ file, as we are generating current frame from previous frame.
+    frame_occ_filename = sprintf(occ_file_fmt, frame_no - 1);
+    if strcmp(flow_type, 'groundtruth') && isfile(frame_occ_filename)
+        frame_occ_map = imread(frame_occ_filename) > 128; % load prev frame occ file, as we are generating current frame from previous frame.
     else
         frame_occ_map = zeros([height, width]); % empty map; no occlusions
     end
