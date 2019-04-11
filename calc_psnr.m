@@ -1,4 +1,4 @@
-function val = psnr(I, Ihat)
+function val = calc_psnr(I, Ihat)
     [rows columns ~] = size(I);
 
     mseImage = (double(I) - double(Ihat)) .^ 2;
