@@ -24,7 +24,7 @@ for seq_i = 1 : size(seqs, 1)
     frames_dir = seqs(seq_i, 2);
     flo_dir = seqs(seq_i, 3);
     occ_dir = seqs(seq_i, 4);
-    %no_of_frames = str2num(seqs(seq_i, 5)); do this when not restricted to p
+    no_of_frames = str2num(seqs(seq_i, 5));
 
     orig_input_file_fmt = sprintf('%s/frame_%%04d.png', frames_dir);
     flo_file_fmt = sprintf('%s/frame_%%04d.flo', flo_dir); % if loading external mvs
