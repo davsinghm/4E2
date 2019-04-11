@@ -69,9 +69,11 @@ for seq_i = 1 : size(seqs, 1)
             [frame_flo, frame_occ_map] = load_frame_flow(ft{1}, seq_name, frame_no, flo_file_fmt, occ_file_fmt, mvs_x, mvs_y, frame, frame_prev, mb_size, use_cached_flow);
 
             if 1 % visualize mvs
+                viz_show_occ = 1; % show red crosses at nan-mvs (occlusions/uncovered areas)
+                viz_mvs_fig = figure(1);
                 viz_mvs_fig_title = sprintf('%s, frame: %d', seq_name, frame_no);
-                viz_mvs = visualize_mvs(frame_rgb, viz_mvs_fig_title, 1, frame_flo, 16, 16, 1); % visualize every 16th mv
-                saveas(viz_mvs, sprintf('tmp/%s_vismvs_frame%04d_%s', seq_name, frame_no, ft{1}), 'svg');
+                visualize_mvs(frame_rgb, viz_mvs_fig_title, frame_flo, 16, 16, viz_show_occ); % visualize every 16th mv
+                saveas(viz_mvs_fig, sprintf('tmp/%s_vismvs_frame%04d_%s', seq_name, frame_no, ft{1}), 'svg');
             end
 
             if 1 % save flow color image
@@ -241,8 +243,7 @@ function [frame_flo, frame_occ_map] = load_frame_flow(flow_type, seq_name, frame
 end
 
 % show vectors using quiver
-function fig = visualize_mvs(frame, fig_title, figure_no, mvs, step_w, step_h, show_nan)
-    fig = figure(figure_no);
+function visualize_mvs(frame, fig_title, mvs, step_w, step_h, show_nan)
     [height, width, ~] = size(frame);
     imshow(frame); axis on;
     title(fig_title, 'Interpreter', 'none');
