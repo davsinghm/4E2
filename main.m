@@ -186,8 +186,9 @@ end
 
 function [frame_flo, frame_occ_map] = load_frame_flow(flow_type, seq_name, frame_no, flo_file_fmt, occ_file_fmt, mvs_x, mvs_y, frame, frame_prev, mb_size)
 
+    flow_cache_dir = 'flow-cache';
     [height, width, chans] = size(frame);
-    frame_flo_flipped_filename = sprintf('sintel-flow/%s/%s/frame_%04d.flo', seq_name, flow_type, frame_no);
+    frame_flo_flipped_filename = sprintf('%s/%s/%s/frame_%04d.flo', flow_cache_dir, seq_name, flow_type, frame_no);
 
     % load or generate occlusion map
     if strcmp(flow_type, 'groundtruth')
@@ -229,12 +230,12 @@ function [frame_flo, frame_occ_map] = load_frame_flow(flow_type, seq_name, frame
 
     % save flow, so that we don't have to generate it everytime:
     %    check directory:
-    [success, message, messageid] = mkdir(sprintf('sintel-flow/%s/%s', seq_name, flow_type));
+    [success, message, messageid] = mkdir(sprintf('%s/%s/%s', flow_cache_dir, seq_name, flow_type));
     if success ~= 1
         error(message);
     end
     %    write flow file
-    writeFlowFile(frame_flo, sprintf('sintel-flow/%s/%s/frame_%04d.flo', seq_name, flow_type, frame_no));
+    writeFlowFile(frame_flo, sprintf('%s/%s/%s/frame_%04d.flo', flow_cache_dir, seq_name, flow_type, frame_no));
 end
 
 % show vectors using quiver
