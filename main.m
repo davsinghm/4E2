@@ -41,7 +41,7 @@ for seq_i = 1 : size(seqs, 1)
         bframes_no = 0;
         ref_frames = 0;
         key_int = 2; % max interval b/w IDR-frames (aka keyframes)
-        crf = 17;
+        crf = 30;
         x264_execute(orig_input_file_fmt, temp_mvs_vid_file, crf, bframes_no, ref_frames, key_int);
 
         % read mvs from file
