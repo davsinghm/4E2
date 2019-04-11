@@ -68,7 +68,7 @@ for seq_i = 1 : size(seqs, 1)
 
             if 1 % visualize mvs
                 viz_mvs = visualize_mvs(frame_rgb, seq_name, 1, frame_flo, 16, 16, 1); % visualize every 16th mv
-                saveas(viz_mvs, sprintf('tmp/%s_vismvs_frame%04d_%s', seq_name, frame_no, ft{1}), 'epsc');
+                saveas(viz_mvs, sprintf('tmp/%s_vismvs_frame%04d_%s', seq_name, frame_no, ft{1}), 'svg');
             end
 
             if 1 % save flow color image
